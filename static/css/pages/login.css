@@ -81,6 +81,17 @@
   color: var(--color-text-muted);
 }
 
+.login__error {
+  margin: var(--space-5) 0 0;
+  padding: var(--space-2-5) var(--space-3-5);
+  border: 1px solid rgba(240, 183, 158, 0.3);
+  border-radius: var(--radius-control);
+  background: #140f12;
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}
+
 .login__providers {
   display: grid;
   gap: var(--space-2-5);

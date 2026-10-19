@@ -4,17 +4,33 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.98"
 publish = false
+default-run = "shortlink"
 
 [dependencies]
 anyhow = "1"
 askama = "0.16.1"
 askama_web = { version = "0.16.0", features = ["axum-0.8"] }
 axum = "0.8.9"
-tokio = { version = "1.53.3", features = ["macros", "rt-multi-thread", "net", "signal"] }
-tower-http = { version = "0.7.1", features = ["fs", "trace"] }
+axum-extra = { version = "0.12.6", features = ["cookie-private"] }
+base64 = "0.23.1"
+chacha20poly1305 = "0.11.0"
+deadpool-postgres = "0.14.2"
+hkdf = "0.13.0"
+hmac = "0.13.0"
+openidconnect = { version = "4.0.1", default-features = false, features = ["reqwest", "rustls-tls"] }
+rand = "0.10.3"
+refinery = { version = "0.10.0", features = ["tokio-postgres"] }
+serde = { version = "1.0.229", features = ["derive"] }
+sha2 = "0.11.1"
+thiserror = "2.0.21"
+time = "0.3.55"
+tokio = { version = "1.53.3", features = ["macros", "rt-multi-thread", "net", "signal", "time"] }
+tokio-postgres = { version = "0.7.18", features = ["with-uuid-1", "with-time-0_3"] }
+tower-http = { version = "0.7.1", features = ["csrf", "fs", "trace"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 url = "2.5.8"
+uuid = { version = "1.28.0", features = ["v4"] }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }

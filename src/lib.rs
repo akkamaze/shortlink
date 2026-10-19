@@ -1,6 +1,10 @@
 pub mod app;
 pub mod assets;
+pub mod auth;
 pub mod config;
+pub mod crypto;
+pub mod db;
 pub mod pages;
 pub mod request_log;
 pub mod security_headers;
+pub mod state;

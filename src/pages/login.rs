@@ -1,22 +1,45 @@
 use askama::Template;
 use askama_web::WebTemplate;
+use axum::{
+    extract::{Query, State},
+    http::StatusCode,
+    response::{IntoResponse, Redirect, Response},
+};
+use axum_extra::extract::CookieJar;
+use serde::Deserialize;
 
-use crate::pages::length_demo::{LengthDemo, login_demo};
+use crate::{
+    auth::{error::Problem, provider::Provider, session},
+    pages::length_demo::{LengthDemo, login_demo},
+    state::AppState,
+};
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/login.html")]
 pub struct LoginPage {
     pub buttons: Vec<LoginButton>,
     pub demo: LengthDemo,
+    pub problem: Option<&'static str>,
 }
 
 pub struct LoginButton {
     pub slug: &'static str,
     pub label: &'static str,
+    pub state: ButtonState,
 }
 
-/// Every way to log in the design shows, in its order. None has a provider
-/// behind it yet, so each is shown but cannot be pressed.
+pub enum ButtonState {
+    Ready,
+    Soon,
+}
+
+#[derive(Deserialize)]
+pub struct LoginQuery {
+    problem: Option<String>,
+}
+
+/// Every way to log in the design shows, in its order. One works once the
+/// app has a sign-in provider behind it; the rest show as Soon.
 const DESIGN_ORDER: [(&str, &str); 4] = [
     ("google", "Google"),
     ("facebook", "Facebook"),
@@ -24,25 +47,62 @@ const DESIGN_ORDER: [(&str, &str); 4] = [
     ("email", "email"),
 ];
 
-pub async fn show() -> LoginPage {
-    LoginPage {
-        buttons: DESIGN_ORDER
-            .into_iter()
-            .map(|(slug, label)| LoginButton { slug, label })
-            .collect(),
-        demo: login_demo(),
+impl LoginPage {
+    pub fn new(problem: Option<Problem>) -> Self {
+        Self {
+            buttons: login_buttons(),
+            demo: login_demo(),
+            problem: problem.map(Problem::message),
+        }
     }
+}
+
+fn login_buttons() -> Vec<LoginButton> {
+    DESIGN_ORDER
+        .into_iter()
+        .map(|(slug, label)| LoginButton {
+            slug,
+            label,
+            state: match Provider::from_slug(slug) {
+                Some(_) => ButtonState::Ready,
+                None => ButtonState::Soon,
+            },
+        })
+        .collect()
+}
+
+/// Never redirects on a failed session lookup, so a database outage cannot
+/// bounce the browser between `/login` and itself.
+pub async fn show(
+    State(state): State<AppState>,
+    Query(query): Query<LoginQuery>,
+    jar: CookieJar,
+) -> Response {
+    let mut problem = query.problem.as_deref().and_then(Problem::from_code);
+
+    match session::current_user(&state.db, &state.keys, &jar).await {
+        Ok(Some(_)) => return Redirect::to("/app").into_response(),
+        Ok(None) => {}
+        Err(error) => {
+            tracing::error!(error = %error, "cannot check the session on the login page");
+            problem = Some(Problem::ServerError);
+        }
+    }
+
+    let status = problem.map_or(StatusCode::OK, Problem::status);
+    (status, LoginPage::new(problem)).into_response()
 }
 
 #[cfg(test)]
 mod tests {
     use askama::Template;
 
-    use super::show;
+    use super::LoginPage;
+    use crate::auth::error::Problem;
 
-    #[tokio::test]
-    async fn every_design_button_shows_in_order_and_none_can_be_pressed() {
-        let html = show().await.render().unwrap();
+    #[test]
+    fn google_signs_in_and_the_other_buttons_wait() {
+        let html = LoginPage::new(None).render().unwrap();
 
         let labels: Vec<&str> = html
             .match_indices("Continue with ")
@@ -58,13 +118,28 @@ mod tests {
                 "Continue with email"
             ]
         );
-        assert!(!html.contains("/auth/"), "no button links to a sign-in yet");
-        assert_eq!(html.matches(r#"aria-disabled="true""#).count(), 4);
+        assert_eq!(html.matches(r#"href="/auth/"#).count(), 1);
+        assert!(html.contains(r#"href="/auth/google/start""#));
+        assert_eq!(html.matches(r#"aria-disabled="true""#).count(), 3);
     }
 
-    #[tokio::test]
-    async fn stylesheets_carry_the_asset_version() {
-        let html = show().await.render().unwrap();
+    #[test]
+    fn a_sign_in_problem_is_shown_as_an_alert() {
+        let html = LoginPage::new(Some(Problem::Expired)).render().unwrap();
+
+        assert!(html.contains(r#"role="alert""#));
+        assert!(html.contains(Problem::Expired.message()));
+        assert!(
+            !LoginPage::new(None)
+                .render()
+                .unwrap()
+                .contains(r#"role="alert""#)
+        );
+    }
+
+    #[test]
+    fn stylesheets_carry_the_asset_version() {
+        let html = LoginPage::new(None).render().unwrap();
 
         let stylesheets: Vec<&str> = html
             .split(r#"rel="stylesheet" href=""#)
