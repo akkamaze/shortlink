@@ -39,6 +39,12 @@
   color: #e3e3e3;
 }
 
+
+.provider-btn--facebook {
+  background: #1877f2;
+  color: #ffffff;
+}
+
 .provider-btn--soon,
 .provider-btn--soon:hover {
   opacity: 0.4;
