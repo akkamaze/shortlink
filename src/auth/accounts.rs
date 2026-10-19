@@ -2,15 +2,17 @@ use anyhow::Context;
 use deadpool_postgres::{Pool, Transaction};
 use uuid::Uuid;
 
-use super::provider::Provider;
+use super::{picture::PictureUrl, provider::Provider};
 use crate::crypto::{DataKeys, Field};
 
 /// What a provider vouched for after its ID token passed verification.
+/// `email` is `None` for providers that do not verify emails.
 pub struct VerifiedIdentity {
     pub provider: Provider,
     pub subject: String,
-    pub email: String,
+    pub email: Option<String>,
     pub display_name: Option<String>,
+    pub picture: Option<PictureUrl>,
 }
 
 /// Finds or creates the user behind an identity and makes sure they own a
@@ -60,17 +62,26 @@ async fn existing_user(tx: &Transaction<'_>, lookup: &[u8]) -> anyhow::Result<Op
     Ok(row.map(|row| row.get(0)))
 }
 
+/// Each sign-in replaces the profile with what the provider sends now, so a
+/// name or picture removed there disappears here too.
 async fn store_profile(
     tx: &Transaction<'_>,
     keys: &DataKeys,
     user_id: Uuid,
     identity: &VerifiedIdentity,
 ) -> anyhow::Result<()> {
-    let (email, display_name) = sealed_profile(keys, user_id, identity);
+    let profile = sealed_profile(keys, user_id, identity);
 
     tx.execute(
-        "UPDATE users SET email_sealed = $2, display_name_sealed = $3 WHERE id = $1",
-        &[&user_id, &email, &display_name],
+        "UPDATE users
+         SET email_sealed = $2, display_name_sealed = $3, picture_sealed = $4
+         WHERE id = $1",
+        &[
+            &user_id,
+            &profile.email,
+            &profile.display_name,
+            &profile.picture,
+        ],
     )
     .await
     .context("cannot refresh the user")?;
@@ -87,11 +98,17 @@ async fn create_user(
     identity: &VerifiedIdentity,
 ) -> anyhow::Result<Uuid> {
     let new_user = Uuid::new_v4();
-    let (email, display_name) = sealed_profile(keys, new_user, identity);
+    let profile = sealed_profile(keys, new_user, identity);
 
     tx.execute(
-        "INSERT INTO users (id, email_sealed, display_name_sealed) VALUES ($1, $2, $3)",
-        &[&new_user, &email, &display_name],
+        "INSERT INTO users (id, email_sealed, display_name_sealed, picture_sealed)
+         VALUES ($1, $2, $3, $4)",
+        &[
+            &new_user,
+            &profile.email,
+            &profile.display_name,
+            &profile.picture,
+        ],
     )
     .await
     .context("cannot create the user")?;
@@ -123,16 +140,21 @@ async fn create_user(
     Ok(owner)
 }
 
-fn sealed_profile(
-    keys: &DataKeys,
-    user_id: Uuid,
-    identity: &VerifiedIdentity,
-) -> (Vec<u8>, Option<Vec<u8>>) {
-    let email = keys.seal(&identity.email, Field::UserEmail, user_id);
-    let display_name = identity
-        .display_name
-        .as_deref()
-        .map(|name| keys.seal(name, Field::UserDisplayName, user_id));
+struct SealedProfile {
+    email: Option<Vec<u8>>,
+    display_name: Option<Vec<u8>>,
+    picture: Option<Vec<u8>>,
+}
 
-    (email, display_name)
+fn sealed_profile(keys: &DataKeys, user_id: Uuid, identity: &VerifiedIdentity) -> SealedProfile {
+    let seal = |value: Option<&str>, field| value.map(|value| keys.seal(value, field, user_id));
+
+    SealedProfile {
+        email: seal(identity.email.as_deref(), Field::UserEmail),
+        display_name: seal(identity.display_name.as_deref(), Field::UserDisplayName),
+        picture: seal(
+            identity.picture.as_ref().map(PictureUrl::as_str),
+            Field::UserPicture,
+        ),
+    }
 }

@@ -33,6 +33,10 @@
   text-align: center;
 }
 
+.home__main .avatar {
+  margin: 0 auto var(--space-6);
+}
+
 .home__title {
   margin: 0;
   font-size: var(--text-hero);

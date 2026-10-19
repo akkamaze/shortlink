@@ -25,7 +25,7 @@ pub async fn start(
     private: PrivateCookieJar,
 ) -> Result<(PrivateCookieJar, Redirect), StatusCode> {
     let provider = Provider::from_slug(&slug).ok_or(StatusCode::NOT_FOUND)?;
-    let (url, pending) = state.oidc.begin(provider);
+    let (url, pending) = state.oidc.begin(provider).ok_or(StatusCode::NOT_FOUND)?;
 
     let private = private.add(pending.into_cookie(state.secure_cookies));
     Ok((private, Redirect::to(url.as_str())))

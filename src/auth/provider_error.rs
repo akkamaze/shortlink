@@ -1,4 +1,6 @@
-use openidconnect::{ClaimsVerificationError, ErrorResponse, RequestTokenError};
+use openidconnect::{
+    ClaimsVerificationError, ErrorResponse, RequestTokenError, SignatureVerificationError,
+};
 
 /// Library error text can carry token claims such as the subject, so only a
 /// fixed description of the failure reaches the log.
@@ -11,9 +13,26 @@ pub fn describe_claims_error(error: &ClaimsVerificationError) -> &'static str {
         ClaimsVerificationError::InvalidIssuer(_) => "ID token issuer mismatch",
         ClaimsVerificationError::InvalidNonce(_) => "ID token nonce mismatch",
         ClaimsVerificationError::InvalidSubject(_) => "ID token subject rejected",
-        ClaimsVerificationError::SignatureVerification(_) => "ID token signature invalid",
+        ClaimsVerificationError::SignatureVerification(error) => describe_signature_error(error),
         ClaimsVerificationError::Unsupported(_) => "ID token uses an unsupported feature",
         _ => "ID token check failed",
+    }
+}
+
+fn describe_signature_error(error: &SignatureVerificationError) -> &'static str {
+    match error {
+        SignatureVerificationError::DisallowedAlg(_) => {
+            "ID token signed with a disallowed algorithm"
+        }
+        SignatureVerificationError::UnsupportedAlg(_) => {
+            "ID token signed with an unsupported algorithm"
+        }
+        SignatureVerificationError::NoMatchingKey => "no provider key matches the ID token",
+        SignatureVerificationError::AmbiguousKeyId(_) => "several provider keys match the ID token",
+        SignatureVerificationError::InvalidKey(_) => "provider key cannot check the ID token",
+        SignatureVerificationError::CryptoError(_) => "ID token signature does not match",
+        SignatureVerificationError::NoSignature => "ID token is unsigned",
+        _ => "ID token signature invalid",
     }
 }
 

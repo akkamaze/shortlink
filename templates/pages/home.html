@@ -4,6 +4,7 @@
 
 {% block styles %}
   <link rel="stylesheet" href="/static/css/components/button.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/avatar.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/components/dot-grid.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/pages/home.css?v={{ crate::assets::VERSION }}">
@@ -22,8 +23,15 @@
   </header>
 
   <main class="home__main">
-    <h1 class="home__title">Hi, {{ display_name }}</h1>
-    <p class="home__sub">Signed in as {{ email }}. Your links page is coming next.</p>
+    {% include "components/avatar.html" %}
+
+    <h1 class="home__title">Hi, {{ profile.name }}</h1>
+    <p class="home__sub">
+      {%- if let Some(email) = profile.email -%}
+        Signed in as {{ email }}.
+      {% endif -%}
+      Your links page is coming next.
+    </p>
   </main>
 
   {% include "components/site_footer.html" %}

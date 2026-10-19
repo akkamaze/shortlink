@@ -9,10 +9,29 @@
           "match": "*",
           "claims": {
             "sub": "${subject}",
-            "aud": ["${clientId}"],
+            "aud": [
+              "${clientId}"
+            ],
             "email": "${subject}@example.com",
             "email_verified": true,
             "name": "${subject}"
+          }
+        }
+      ]
+    },
+    {
+      "issuerId": "line",
+      "requestMappings": [
+        {
+          "requestParam": "subject",
+          "match": "*",
+          "claims": {
+            "sub": "${subject}",
+            "aud": [
+              "${clientId}"
+            ],
+            "name": "${subject} on LINE",
+            "picture": "https://profile.line-scdn.net/mock-${subject}"
           }
         }
       ]

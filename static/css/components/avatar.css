@@ -1,0 +1,18 @@
+.avatar {
+  display: block;
+  flex: none;
+  width: var(--space-12);
+  height: var(--space-12);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  object-fit: cover;
+}
+
+.avatar--initial {
+  display: grid;
+  place-items: center;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  color: var(--color-accent-soft);
+}
