@@ -61,4 +61,23 @@ mod tests {
         assert!(!html.contains("/auth/"), "no button links to a sign-in yet");
         assert_eq!(html.matches(r#"aria-disabled="true""#).count(), 4);
     }
+
+    #[tokio::test]
+    async fn stylesheets_carry_the_asset_version() {
+        let html = show().await.render().unwrap();
+
+        let stylesheets: Vec<&str> = html
+            .split(r#"rel="stylesheet" href=""#)
+            .skip(1)
+            .map(|rest| rest.split('"').next().unwrap())
+            .collect();
+
+        assert!(!stylesheets.is_empty());
+        for href in stylesheets {
+            assert!(
+                href.ends_with(&format!("?v={}", crate::assets::VERSION)),
+                "{href}"
+            );
+        }
+    }
 }

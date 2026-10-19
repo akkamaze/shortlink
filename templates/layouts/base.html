@@ -7,9 +7,9 @@
 
   <link rel="preload" href="/static/fonts/inter/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
 
-  <link rel="stylesheet" href="/static/css/fonts.css">
-  <link rel="stylesheet" href="/static/css/tokens.css">
-  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/fonts.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/tokens.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/base.css?v={{ crate::assets::VERSION }}">
   {% block styles %}{% endblock %}
 </head>
 <body>

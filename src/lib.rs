@@ -1,4 +1,5 @@
 pub mod app;
+pub mod assets;
 pub mod config;
 pub mod pages;
 pub mod request_log;
