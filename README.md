@@ -3,7 +3,7 @@
 Short links at `link.synqloud.com`. Rust (Axum, tokio-postgres) with server-rendered Askama
 pages and PostgreSQL.
 
-Google sign-in works; the other sign-in buttons are drawn but not wired up yet.
+Google and LINE sign-in work; the other sign-in buttons are drawn but not wired up yet.
 
 ## Run locally
 
@@ -18,6 +18,8 @@ Fill in `.env`: the three Postgres passwords (the app and owner ones also go ins
 `openssl rand -base64 64 | tr -d '\n'` and a `DATA_KEY` from `openssl rand -base64 32`.
 For sign-in without real Google, set `GOOGLE_ISSUER_URL=http://localhost:8080/default` and any
 client id and secret.
+LINE is optional; to try it against the mock, set `LINE_ISSUER_URL=http://localhost:8080/line`
+and any `LINE_CLIENT_ID` and `LINE_CLIENT_SECRET`.
 
 ```bash
 docker compose --profile dev up -d
@@ -27,9 +29,8 @@ cargo run
 ```
 
 Open `http://localhost:3100`. "Continue with Google" goes to the mock provider; type any
-username to sign in as `<username>@example.com`.
-
-Open `http://localhost:3100`.
+username to sign in as `<username>@example.com`. "Continue with LINE" does the same without
+an email, like the real LINE. Each provider is its own account.
 
 ## Test
 

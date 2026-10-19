@@ -23,7 +23,12 @@
 
   <main class="home__main">
     <h1 class="home__title">Hi, {{ display_name }}</h1>
-    <p class="home__sub">Signed in as {{ email }}. Your links page is coming next.</p>
+    <p class="home__sub">
+      {%- if let Some(email) = email -%}
+        Signed in as {{ email }}.
+      {% endif -%}
+      Your links page is coming next.
+    </p>
   </main>
 
   {% include "components/site_footer.html" %}

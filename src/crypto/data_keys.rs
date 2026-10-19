@@ -26,6 +26,7 @@ pub struct DataKeys {
 pub enum Field {
     UserEmail,
     UserDisplayName,
+    UserPicture,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -121,6 +122,7 @@ fn associated_data(version: u8, field: Field, row: Uuid) -> Vec<u8> {
     let label: &[u8] = match field {
         Field::UserEmail => b"users.email",
         Field::UserDisplayName => b"users.display_name",
+        Field::UserPicture => b"users.picture",
     };
 
     [&[version][..], label, &[0], row.as_bytes()].concat()

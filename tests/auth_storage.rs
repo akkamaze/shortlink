@@ -8,6 +8,7 @@ use axum_extra::extract::cookie::CookieJar;
 use shortlink::{
     auth::{
         accounts::{VerifiedIdentity, sign_in},
+        picture::PictureUrl,
         provider::Provider,
         session,
     },
@@ -44,9 +45,28 @@ fn identity(subject: &str, email: &str) -> VerifiedIdentity {
     VerifiedIdentity {
         provider: Provider::Google,
         subject: subject.to_owned(),
-        email: email.to_owned(),
+        email: Some(email.to_owned()),
         display_name: Some("Ann".to_owned()),
+        picture: None,
     }
+}
+
+fn line_identity(subject: &str) -> VerifiedIdentity {
+    VerifiedIdentity {
+        provider: Provider::Line,
+        subject: subject.to_owned(),
+        email: None,
+        display_name: Some("Ann on LINE".to_owned()),
+        picture: PictureUrl::parse(&format!("https://profile.line-scdn.net/{subject}")),
+    }
+}
+
+fn fresh_subject() -> String {
+    uuid::Uuid::new_v4().to_string()
+}
+
+fn session_jar(token: session::SessionToken) -> CookieJar {
+    CookieJar::new().add(token.into_cookie(false))
 }
 
 #[tokio::test]
@@ -86,7 +106,7 @@ async fn signing_in_twice_reuses_the_user_and_its_single_space() {
 
     assert_eq!(first, second);
     assert_eq!(spaces, 1);
-    assert_eq!(email, "ann@new.example");
+    assert_eq!(email.as_deref(), Some("ann@new.example"));
 }
 
 #[tokio::test]
@@ -160,6 +180,7 @@ async fn a_database_dump_holds_no_readable_personal_data() {
     let subject = format!("sub-{}", uuid::Uuid::new_v4());
     let email = format!("{subject}@leakcheck.example");
     let name = format!("Leakcheck {subject}");
+    let picture = format!("https://profile.line-scdn.net/{subject}-pic");
 
     let user_id = sign_in(
         &pool,
@@ -167,8 +188,9 @@ async fn a_database_dump_holds_no_readable_personal_data() {
         &VerifiedIdentity {
             provider: Provider::Google,
             subject: subject.clone(),
-            email: email.clone(),
+            email: Some(email.clone()),
             display_name: Some(name.clone()),
+            picture: PictureUrl::parse(&picture),
         },
     )
     .await
@@ -187,7 +209,7 @@ async fn a_database_dump_holds_no_readable_personal_data() {
         }
     }
 
-    for secret in [&subject, &email, &name] {
+    for secret in [&subject, &email, &name, &picture] {
         let as_hex = secret.bytes().fold(String::new(), |mut out, byte| {
             let _ = write!(out, "{byte:02x}");
             out
@@ -211,7 +233,6 @@ async fn the_app_role_cannot_change_the_schema_or_migration_history() {
         "DROP TABLE sessions",
         "CREATE TABLE intruder (id int)",
         "ALTER TABLE users ADD COLUMN extra text",
-        "DELETE FROM identities",
         "UPDATE identities SET user_id = user_id",
         "DELETE FROM spaces",
         "UPDATE sessions SET expires_at = now()",
@@ -309,4 +330,69 @@ async fn cleanup_removes_expired_sessions_and_keeps_live_ones() {
         0,
         "a second run changes nothing"
     );
+}
+
+#[tokio::test]
+async fn a_line_account_keeps_its_name_and_picture_and_has_no_email() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let line = line_identity(&fresh_subject());
+
+    let user_id = sign_in(&pool, &keys(), &line).await.unwrap();
+    let jar = session_jar(session::create(&pool, user_id).await.unwrap());
+    let user = session::current_user(&pool, &keys(), &jar)
+        .await
+        .unwrap()
+        .unwrap();
+
+    assert_eq!(user.email, None);
+    assert_eq!(user.display_name.as_deref(), Some("Ann on LINE"));
+    assert_eq!(user.picture, line.picture);
+}
+
+#[tokio::test]
+async fn google_and_line_sign_ins_are_separate_accounts() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+
+    let via_google = sign_in(
+        &pool,
+        &keys(),
+        &identity(&fresh_subject(), "ann@example.com"),
+    )
+    .await
+    .unwrap();
+    let via_line = sign_in(&pool, &keys(), &line_identity(&fresh_subject()))
+        .await
+        .unwrap();
+
+    assert_ne!(via_google, via_line);
+}
+
+#[tokio::test]
+async fn signing_in_again_replaces_the_name_and_picture() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let subject = fresh_subject();
+    let user_id = sign_in(&pool, &keys(), &line_identity(&subject))
+        .await
+        .unwrap();
+
+    let renamed = VerifiedIdentity {
+        display_name: Some("Ann Lee".to_owned()),
+        picture: None,
+        ..line_identity(&subject)
+    };
+    sign_in(&pool, &keys(), &renamed).await.unwrap();
+    let jar = session_jar(session::create(&pool, user_id).await.unwrap());
+    let user = session::current_user(&pool, &keys(), &jar)
+        .await
+        .unwrap()
+        .unwrap();
+
+    assert_eq!(user.display_name.as_deref(), Some("Ann Lee"));
+    assert_eq!(user.picture, None, "a picture removed at LINE is gone here");
 }

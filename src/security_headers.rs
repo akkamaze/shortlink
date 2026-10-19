@@ -9,9 +9,11 @@ use axum::{
 
 /// Pages load only our own styles and fonts and run no script. Inline style
 /// attributes are allowed because the login card sets per-letter animation
-/// delays that way; they cannot execute code.
+/// delays that way; they cannot execute code. Images may also come from the
+/// providers' profile picture hosts in `PICTURE_HOSTS`.
 const CONTENT_SECURITY_POLICY: &str = "default-src 'none'; style-src 'self'; \
-     style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self'; \
+     style-src-attr 'unsafe-inline'; font-src 'self'; \
+     img-src 'self' https://profile.line-scdn.net https://lh3.googleusercontent.com; \
      form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
 
 const HSTS: &str = "max-age=31536000; includeSubDomains";
@@ -80,6 +82,7 @@ mod tests {
     use tower::ServiceExt;
 
     use super::{apply, site_headers};
+    use crate::auth::picture::PICTURE_HOSTS;
 
     async fn response_headers(https: bool, path: &str) -> axum::http::HeaderMap {
         let app = Router::new()
@@ -118,6 +121,12 @@ mod tests {
         assert!(csp.contains("default-src 'none'"));
         assert!(csp.contains("frame-ancestors 'none'"));
         assert!(!csp.contains("script-src"), "no script source is allowed");
+        for host in PICTURE_HOSTS {
+            assert!(
+                csp.contains(&format!(" https://{host}")),
+                "{host} pictures load"
+            );
+        }
         assert_eq!(headers[header::X_CONTENT_TYPE_OPTIONS], "nosniff");
         assert_eq!(headers[header::REFERRER_POLICY], "no-referrer");
         assert_eq!(headers[header::X_FRAME_OPTIONS], "DENY");

@@ -6,6 +6,7 @@ use sha2::{Digest, Sha256};
 use time::Duration;
 use uuid::Uuid;
 
+use super::picture::PictureUrl;
 use crate::crypto::{DataKeys, Field, OpenError};
 
 pub const SESSION_COOKIE: &str = "sl_session";
@@ -21,8 +22,15 @@ pub struct SessionToken {
 
 pub struct CurrentUser {
     pub id: Uuid,
-    pub email: String,
+    pub email: Option<String>,
     pub display_name: Option<String>,
+    pub picture: Option<PictureUrl>,
+}
+
+struct SealedProfile {
+    email: Option<Vec<u8>>,
+    display_name: Option<Vec<u8>>,
+    picture: Option<Vec<u8>>,
 }
 
 impl SessionToken {
@@ -88,7 +96,7 @@ pub async fn current_user(
     let client = db.get().await.context("no database connection")?;
     let row = client
         .query_opt(
-            "SELECT u.id, u.email_sealed, u.display_name_sealed
+            "SELECT u.id, u.email_sealed, u.display_name_sealed, u.picture_sealed
              FROM sessions s JOIN users u ON u.id = s.user_id
              WHERE s.token_hash = $1 AND s.expires_at > now()",
             &[&hash],
@@ -101,10 +109,13 @@ pub async fn current_user(
     };
 
     let id: Uuid = row.get(0);
-    let email: Vec<u8> = row.get(1);
-    let display_name: Option<Vec<u8>> = row.get(2);
+    let sealed = SealedProfile {
+        email: row.get(1),
+        display_name: row.get(2),
+        picture: row.get(3),
+    };
 
-    let Ok(user) = open_profile(keys, id, &email, display_name.as_deref()) else {
+    let Ok(user) = open_profile(keys, id, &sealed) else {
         tracing::warn!("session profile cannot be opened; signing the session out");
         end_session(&client, &hash).await?;
         return Ok(None);
@@ -116,15 +127,21 @@ pub async fn current_user(
 fn open_profile(
     keys: &DataKeys,
     id: Uuid,
-    email: &[u8],
-    display_name: Option<&[u8]>,
+    sealed: &SealedProfile,
 ) -> Result<CurrentUser, OpenError> {
+    let open = |value: &Option<Vec<u8>>, field| {
+        value
+            .as_deref()
+            .map(|value| keys.open(value, field, id))
+            .transpose()
+    };
+
     Ok(CurrentUser {
         id,
-        email: keys.open(email, Field::UserEmail, id)?,
-        display_name: display_name
-            .map(|sealed| keys.open(sealed, Field::UserDisplayName, id))
-            .transpose()?,
+        email: open(&sealed.email, Field::UserEmail)?,
+        display_name: open(&sealed.display_name, Field::UserDisplayName)?,
+        picture: open(&sealed.picture, Field::UserPicture)?
+            .and_then(|picture| PictureUrl::parse(&picture)),
     })
 }
 

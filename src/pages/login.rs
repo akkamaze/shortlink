@@ -38,8 +38,8 @@ pub struct LoginQuery {
     problem: Option<String>,
 }
 
-/// Every way to log in the design shows, in its order. One works once the
-/// app has a sign-in provider behind it; the rest show as Soon.
+/// Every way to log in the design shows, in its order. A button works once
+/// its provider is configured; the rest show as Soon.
 const DESIGN_ORDER: [(&str, &str); 4] = [
     ("google", "Google"),
     ("facebook", "Facebook"),
@@ -48,24 +48,24 @@ const DESIGN_ORDER: [(&str, &str); 4] = [
 ];
 
 impl LoginPage {
-    pub fn new(problem: Option<Problem>) -> Self {
+    pub fn new(problem: Option<Problem>, enabled: &[Provider]) -> Self {
         Self {
-            buttons: login_buttons(),
+            buttons: login_buttons(enabled),
             demo: login_demo(),
             problem: problem.map(Problem::message),
         }
     }
 }
 
-fn login_buttons() -> Vec<LoginButton> {
+fn login_buttons(enabled: &[Provider]) -> Vec<LoginButton> {
     DESIGN_ORDER
         .into_iter()
         .map(|(slug, label)| LoginButton {
             slug,
             label,
             state: match Provider::from_slug(slug) {
-                Some(_) => ButtonState::Ready,
-                None => ButtonState::Soon,
+                Some(provider) if enabled.contains(&provider) => ButtonState::Ready,
+                _ => ButtonState::Soon,
             },
         })
         .collect()
@@ -90,7 +90,9 @@ pub async fn show(
     }
 
     let status = problem.map_or(StatusCode::OK, Problem::status);
-    (status, LoginPage::new(problem)).into_response()
+    let page = LoginPage::new(problem, &state.oidc.enabled());
+
+    (status, page).into_response()
 }
 
 #[cfg(test)]
@@ -98,11 +100,11 @@ mod tests {
     use askama::Template;
 
     use super::LoginPage;
-    use crate::auth::error::Problem;
+    use crate::auth::{error::Problem, provider::Provider};
 
     #[test]
     fn google_signs_in_and_the_other_buttons_wait() {
-        let html = LoginPage::new(None).render().unwrap();
+        let html = LoginPage::new(None, &[Provider::Google]).render().unwrap();
 
         let labels: Vec<&str> = html
             .match_indices("Continue with ")
@@ -124,13 +126,25 @@ mod tests {
     }
 
     #[test]
+    fn line_signs_in_once_it_is_configured() {
+        let html = LoginPage::new(None, &[Provider::Google, Provider::Line])
+            .render()
+            .unwrap();
+
+        assert!(html.contains(r#"href="/auth/line/start""#));
+        assert_eq!(html.matches(r#"aria-disabled="true""#).count(), 2);
+    }
+
+    #[test]
     fn a_sign_in_problem_is_shown_as_an_alert() {
-        let html = LoginPage::new(Some(Problem::Expired)).render().unwrap();
+        let html = LoginPage::new(Some(Problem::Expired), &[Provider::Google])
+            .render()
+            .unwrap();
 
         assert!(html.contains(r#"role="alert""#));
         assert!(html.contains(Problem::Expired.message()));
         assert!(
-            !LoginPage::new(None)
+            !LoginPage::new(None, &[Provider::Google])
                 .render()
                 .unwrap()
                 .contains(r#"role="alert""#)
@@ -139,7 +153,7 @@ mod tests {
 
     #[test]
     fn stylesheets_carry_the_asset_version() {
-        let html = LoginPage::new(None).render().unwrap();
+        let html = LoginPage::new(None, &[Provider::Google]).render().unwrap();
 
         let stylesheets: Vec<&str> = html
             .split(r#"rel="stylesheet" href=""#)
