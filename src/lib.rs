@@ -4,6 +4,7 @@ pub mod auth;
 pub mod config;
 pub mod crypto;
 pub mod db;
+pub mod links;
 pub mod pages;
 pub mod request_log;
 pub mod security_headers;

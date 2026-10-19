@@ -81,6 +81,7 @@ fn percent_shorter(long: usize, short: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::{char_len, deleted_backwards, login_demo, percent_shorter, typed_forwards};
+    use crate::links::reserved::{SHORTLINK_HOME, reserved};
 
     fn delays(chars: &[super::TimedChar]) -> Vec<usize> {
         chars.iter().map(|c| c.delay_ms).collect()
@@ -114,5 +115,15 @@ mod tests {
         assert_eq!(percent_shorter(91, 17), 81);
         assert_eq!(percent_shorter(200, 1), 100);
         assert_eq!(percent_shorter(3, 2), 33);
+    }
+
+    #[test]
+    fn both_demo_slugs_are_reserved_for_the_shortlink_home() {
+        let demo = login_demo();
+
+        for chars in [&demo.random_slug, &demo.custom_slug] {
+            let slug: String = chars.iter().map(|c| c.ch).collect();
+            assert_eq!(reserved(&slug), Some(SHORTLINK_HOME), "{slug}");
+        }
     }
 }
