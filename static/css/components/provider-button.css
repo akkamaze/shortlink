@@ -50,11 +50,25 @@
   color: #ffffff;
 }
 
+.provider-btn--email {
+  background: #ffffff;
+  color: #000000;
+}
+
+.provider-btn--email:hover {
+  filter: none;
+  background: #ececec;
+}
+
 .provider-btn--soon,
 .provider-btn--soon:hover {
   opacity: 0.4;
   cursor: default;
   filter: none;
+}
+
+.provider-btn--email.provider-btn--soon:hover {
+  background: #ffffff;
 }
 
 .provider-btn__soon {
