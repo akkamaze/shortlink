@@ -7,9 +7,8 @@ use axum_extra::extract::{CookieJar, PrivateCookieJar};
 use serde::Deserialize;
 
 use super::{
-    accounts::{self, SignIn},
+    accounts,
     error::AuthError,
-    pending_link::{LINK_COOKIE, PendingLink},
     pending_login::{LOGIN_COOKIE, PendingLogin},
     provider::Provider,
     provider_error, session,
@@ -51,37 +50,12 @@ pub async fn callback(
     let private = private.remove(PendingLogin::removal_cookie());
 
     match complete_sign_in(&state, &slug, params, pending).await {
-        Ok(Outcome::Signed { user_id, token }) => {
+        Ok(token) => {
             let jar = jar.add(token.into_cookie(state.secure_cookies));
-            let waiting_link = private
-                .get(LINK_COOKIE)
-                .and_then(|cookie| PendingLink::decode(cookie.value()));
-
-            match waiting_link {
-                Some(link) if link.holder == user_id => {
-                    (private, jar, Redirect::to("/link")).into_response()
-                }
-                Some(_) => {
-                    let private = private.remove(PendingLink::removal_cookie());
-                    (private, jar, Redirect::to("/app")).into_response()
-                }
-                None => (private, jar, Redirect::to("/app")).into_response(),
-            }
-        }
-        Ok(Outcome::NeedsConfirmation(link)) => {
-            let private = private.add(link.into_cookie(state.secure_cookies));
-            (private, Redirect::to("/link")).into_response()
+            (private, jar, Redirect::to("/app")).into_response()
         }
         Err(error) => (private, error).into_response(),
     }
-}
-
-enum Outcome {
-    Signed {
-        user_id: uuid::Uuid,
-        token: session::SessionToken,
-    },
-    NeedsConfirmation(PendingLink),
 }
 
 async fn complete_sign_in(
@@ -89,7 +63,7 @@ async fn complete_sign_in(
     slug: &str,
     params: CallbackParams,
     pending: Option<PendingLogin>,
-) -> Result<Outcome, AuthError> {
+) -> Result<session::SessionToken, AuthError> {
     if let Some(reason) = params.error {
         return Err(AuthError::Cancelled(
             provider_error::callback_error_code(&reason).to_owned(),
@@ -103,15 +77,8 @@ async fn complete_sign_in(
     let code = params.code.ok_or(AuthError::Expired)?;
 
     let identity = state.providers.finish(pending, code).await?;
-    match accounts::sign_in(&state.db, &state.keys, &identity).await? {
-        SignIn::Signed(user_id) => Ok(Outcome::Signed {
-            user_id,
-            token: session::create(&state.db, user_id).await?,
-        }),
-        SignIn::EmailTaken { holder } => {
-            Ok(Outcome::NeedsConfirmation(PendingLink { holder, identity }))
-        }
-    }
+    let user_id = accounts::sign_in(&state.db, &state.keys, &identity).await?;
+    Ok(session::create(&state.db, user_id).await?)
 }
 
 pub async fn logout(

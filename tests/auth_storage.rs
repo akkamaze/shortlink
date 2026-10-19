@@ -7,7 +7,7 @@ use std::fmt::Write;
 use axum_extra::extract::cookie::CookieJar;
 use shortlink::{
     auth::{
-        accounts::{self, Attach, ProviderEmail, SignIn, VerifiedIdentity, sign_in},
+        accounts::{VerifiedIdentity, sign_in},
         picture::PictureUrl,
         provider::Provider,
         session,
@@ -45,10 +45,7 @@ fn identity(subject: &str, email: &str) -> VerifiedIdentity {
     VerifiedIdentity {
         provider: Provider::Google,
         subject: subject.to_owned(),
-        email: Some(ProviderEmail {
-            address: email.to_owned(),
-            verified: true,
-        }),
+        email: Some(email.to_owned()),
         display_name: Some("Ann".to_owned()),
         picture: None,
     }
@@ -65,10 +62,7 @@ fn line_identity(subject: &str) -> VerifiedIdentity {
 }
 
 async fn signed(pool: &deadpool_postgres::Pool, identity: &VerifiedIdentity) -> uuid::Uuid {
-    match sign_in(pool, &keys(), identity).await.unwrap() {
-        SignIn::Signed(user_id) => user_id,
-        SignIn::EmailTaken { .. } => panic!("expected a sign-in, the email was taken"),
-    }
+    sign_in(pool, &keys(), identity).await.unwrap()
 }
 
 fn fresh_subject() -> String {
@@ -206,10 +200,7 @@ async fn a_database_dump_holds_no_readable_personal_data() {
         &VerifiedIdentity {
             provider: Provider::Google,
             subject: subject.clone(),
-            email: Some(ProviderEmail {
-                address: email.clone(),
-                verified: true,
-            }),
+            email: Some(email.clone()),
             display_name: Some(name.clone()),
             picture: PictureUrl::parse(&picture),
         },
@@ -411,14 +402,11 @@ async fn signing_in_again_replaces_the_name_and_picture() {
     assert_eq!(user.picture, None, "a picture removed at LINE is gone here");
 }
 
-fn claimed_email(provider: Provider, address: &str, verified: bool) -> VerifiedIdentity {
+fn with_email(provider: Provider, address: &str) -> VerifiedIdentity {
     VerifiedIdentity {
         provider,
         subject: fresh_subject(),
-        email: Some(ProviderEmail {
-            address: address.to_owned(),
-            verified,
-        }),
+        email: Some(address.to_owned()),
         display_name: None,
         picture: None,
     }
@@ -429,99 +417,33 @@ fn fresh_email() -> String {
 }
 
 #[tokio::test]
-async fn a_new_sign_in_with_a_taken_email_waits_until_the_owner_adds_it() {
+async fn google_and_facebook_with_one_email_are_separate_accounts() {
     let Some(pool) = test_pool().await else {
         return;
     };
     let email = fresh_email();
-    let owner = signed(&pool, &identity(&fresh_subject(), &email)).await;
-    let newcomer = claimed_email(Provider::Line, &email.to_uppercase(), false);
 
-    let first_try = sign_in(&pool, &keys(), &newcomer).await.unwrap();
-    let added = accounts::attach(&pool, &keys(), owner, &newcomer)
-        .await
-        .unwrap();
-    let next_time = sign_in(&pool, &keys(), &newcomer).await.unwrap();
+    let google = signed(&pool, &with_email(Provider::Google, &email)).await;
+    let facebook = signed(&pool, &with_email(Provider::Facebook, &email)).await;
+    let second_google = signed(&pool, &with_email(Provider::Google, &email)).await;
 
-    assert_eq!(first_try, SignIn::EmailTaken { holder: owner });
-    assert_eq!(added, Attach::Attached);
-    assert_eq!(next_time, SignIn::Signed(owner));
-    assert_eq!(
-        accounts::sign_in_providers(&pool, owner).await.unwrap(),
-        [Provider::Google, Provider::Line]
+    assert_ne!(google, facebook);
+    assert_ne!(
+        google, second_google,
+        "each Google account is its own account too"
     );
+    assert_eq!(identities_of(&pool, google).await, 1);
 }
 
-#[tokio::test]
-async fn a_sign_in_that_opens_another_account_cannot_be_added() {
-    let Some(pool) = test_pool().await else {
-        return;
-    };
-    let mine = signed(&pool, &identity(&fresh_subject(), &fresh_email())).await;
-    let theirs = line_identity(&fresh_subject());
-    let their_account = signed(&pool, &theirs).await;
-
-    let added = accounts::attach(&pool, &keys(), mine, &theirs)
+async fn identities_of(pool: &deadpool_postgres::Pool, user_id: uuid::Uuid) -> i64 {
+    pool.get()
         .await
-        .unwrap();
-
-    assert_eq!(added, Attach::OwnedElsewhere);
-    assert_eq!(signed(&pool, &theirs).await, their_account);
-}
-
-#[tokio::test]
-async fn a_verified_email_takes_the_address_back_from_an_unverified_claim() {
-    let Some(pool) = test_pool().await else {
-        return;
-    };
-    let email = fresh_email();
-    let squatter = signed(&pool, &claimed_email(Provider::Line, &email, false)).await;
-    let real_owner = identity(&fresh_subject(), &email);
-
-    let first_try = sign_in(&pool, &keys(), &real_owner).await.unwrap();
-    let own_account = accounts::create_separate(&pool, &keys(), &real_owner)
+        .unwrap()
+        .query_one(
+            "SELECT count(*) FROM identities WHERE user_id = $1",
+            &[&user_id],
+        )
         .await
-        .unwrap();
-    let later_claim = sign_in(
-        &pool,
-        &keys(),
-        &claimed_email(Provider::Line, &email, false),
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(first_try, SignIn::EmailTaken { holder: squatter });
-    assert_ne!(own_account, squatter);
-    assert_eq!(signed(&pool, &real_owner).await, own_account);
-    assert_eq!(
-        later_claim,
-        SignIn::EmailTaken {
-            holder: own_account
-        }
-    );
-}
-
-#[tokio::test]
-async fn an_unverified_separate_account_never_takes_a_verified_email() {
-    let Some(pool) = test_pool().await else {
-        return;
-    };
-    let email = fresh_email();
-    let owner = signed(&pool, &identity(&fresh_subject(), &email)).await;
-    let other = claimed_email(Provider::Line, &email, false);
-
-    let separate = accounts::create_separate(&pool, &keys(), &other)
-        .await
-        .unwrap();
-    let next_newcomer = sign_in(
-        &pool,
-        &keys(),
-        &claimed_email(Provider::Line, &email, false),
-    )
-    .await
-    .unwrap();
-
-    assert_ne!(separate, owner);
-    assert_eq!(signed(&pool, &other).await, separate);
-    assert_eq!(next_newcomer, SignIn::EmailTaken { holder: owner });
+        .unwrap()
+        .get(0)
 }
