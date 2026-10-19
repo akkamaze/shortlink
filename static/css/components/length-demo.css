@@ -248,3 +248,32 @@
   36%, 61% { --chars: var(--len-random); animation-timing-function: linear; }
   69%, 100% { --chars: var(--len-custom); }
 }
+
+/* Without motion, show where the demo ends: the custom short link. */
+@media (prefers-reduced-motion: reduce) {
+  .length-demo,
+  .length-demo * {
+    animation: none !important;
+  }
+
+  .length-demo__caption--original,
+  .length-demo__long,
+  .length-demo__tag--random,
+  .length-demo__saving-random,
+  .length-demo__out,
+  .length-demo__caret-window {
+    opacity: 0;
+  }
+
+  .length-demo__out {
+    max-width: 0;
+  }
+
+  .length-demo__fill {
+    transform: scaleX(calc(var(--len-custom) / var(--len-long)));
+  }
+
+  .length-demo__count {
+    --chars: var(--len-custom);
+  }
+}
