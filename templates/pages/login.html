@@ -3,6 +3,7 @@
 {% block title %}Log in · shortlink{% endblock %}
 
 {% block styles %}
+  <link rel="stylesheet" href="/static/css/components/provider-button.css">
   <link rel="stylesheet" href="/static/css/pages/login.css">
 {% endblock %}
 
@@ -20,6 +21,12 @@
     <section class="login__panel">
       <h1 id="login-title" class="login__title">Log in to shortlink</h1>
       <p class="login__sub">New here? Logging in creates your account.</p>
+
+      <div class="login__providers">
+        {% for provider in buttons %}
+          {% include "components/provider_button.html" %}
+        {% endfor %}
+      </div>
 
       <p class="login__terms">By continuing, you agree to the Terms of Service and Privacy Policy.</p>
     </section>

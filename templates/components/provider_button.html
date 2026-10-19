@@ -1,0 +1,6 @@
+<span class="provider-btn provider-btn--{{ provider.slug }} provider-btn--soon" aria-disabled="true">
+  {% let slug = provider.slug %}
+  {% include "components/provider_icon.html" %}
+  <span>Continue with {{ provider.label }}</span>
+  <span class="provider-btn__soon">Soon</span>
+</span>
