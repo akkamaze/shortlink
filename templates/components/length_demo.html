@@ -1,14 +1,21 @@
-<div class="length-demo" style="--len-long: {{ demo.long_len }}">
+<div class="length-demo" style="--len-long: {{ demo.long_len }}; --len-random: {{ demo.random_len }}">
   <div class="length-demo__head">
-    <span class="length-demo__caption">Original link</span>
+    <span class="length-demo__caption length-demo__caption--original">Original link</span>
+    <span class="length-demo__caption length-demo__caption--short">Short link</span>
+    <span class="length-demo__tag length-demo__tag--random">Random</span>
   </div>
 
   <div class="length-demo__body">
     <div class="length-demo__long">{{ demo.long_url }}</div>
+    <div class="length-demo__short"><span class="length-demo__host">{{ demo.host }}</span>{{ demo.random_slug }}</div>
   </div>
 
   <div class="length-demo__meter">
     <span class="length-demo__track"><span class="length-demo__fill"></span></span>
     <span class="length-demo__count"></span>
+  </div>
+
+  <div class="length-demo__saving">
+    <span class="length-demo__saving-random">{{ demo.random_saving }}% shorter</span>
   </div>
 </div>
