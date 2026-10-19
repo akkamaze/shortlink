@@ -1,0 +1,112 @@
+.login {
+  position: relative;
+  min-height: 100vh;
+  background-image: radial-gradient(at 25% 30%, rgba(27, 43, 61, 0.45), rgba(0, 0, 0, 0) 60%);
+}
+
+/* Floats over the grid so the card stays centred, at the same spot as the app header's brand. */
+.login__top {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+.login__brand {
+  font-size: var(--text-xl);
+  line-height: var(--leading-none);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-brand);
+  text-decoration: none;
+}
+
+.login__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 400px);
+  align-items: center;
+  gap: var(--space-20);
+  max-width: var(--container-max);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-8);
+}
+
+.login__art {
+  position: relative;
+  min-width: 0;
+}
+
+.login__hero {
+  margin: 0;
+  font-size: var(--text-hero);
+  line-height: var(--leading-display);
+  font-weight: var(--weight-book);
+  letter-spacing: var(--tracking-display);
+}
+
+.login__hero span {
+  color: var(--color-text-muted);
+}
+
+.login__panel {
+  min-width: 0;
+  padding: var(--space-10) var(--space-8) var(--space-7);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.login__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-title);
+}
+
+.login__sub {
+  max-width: var(--measure-narrow);
+  margin: var(--space-2) auto 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+}
+
+.login__terms {
+  max-width: var(--measure-narrow);
+  margin: var(--space-5) auto 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-subtle);
+}
+
+@media (max-width: 900px) {
+  .login__top {
+    position: static;
+    padding: var(--space-4);
+  }
+
+  .login__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+    min-height: 0;
+    max-width: 440px;
+    padding: var(--space-12) var(--space-4) var(--space-10);
+  }
+
+  .login__art {
+    text-align: center;
+  }
+
+  .login__hero {
+    font-size: var(--text-display);
+  }
+
+  .login__panel {
+    padding: var(--space-7) var(--space-5) var(--space-5);
+  }
+}

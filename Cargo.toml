@@ -7,9 +7,11 @@ publish = false
 
 [dependencies]
 anyhow = "1"
+askama = "0.16.1"
+askama_web = { version = "0.16.0", features = ["axum-0.8"] }
 axum = "0.8.9"
 tokio = { version = "1.53.3", features = ["macros", "rt-multi-thread", "net", "signal"] }
-tower-http = { version = "0.7.1", features = ["trace"] }
+tower-http = { version = "0.7.1", features = ["fs", "trace"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 url = "2.5.8"
