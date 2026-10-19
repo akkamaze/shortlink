@@ -31,6 +31,10 @@ Open `http://localhost:3100`.
 cargo test
 ```
 
+Database tests run when `TEST_DATABASE_URL` (app role) and `TEST_MIGRATION_DATABASE_URL`
+(owner role) point at a disposable database, for example the `shortlink_test` database that
+`postgres/init` creates. Without them they skip.
+
 ## Database roles
 
 `postgres/init/01-roles.sh` runs once, when the Postgres data directory is first created. The
@@ -42,6 +46,8 @@ right to create, alter or drop anything.
 
 | Path | What it holds |
 |---|---|
+| `src/auth/` | Accounts and sessions |
+| `src/crypto/` | Sealing personal fields and keyed lookups |
 | `src/pages/` | Page handlers and their view data |
 | `templates/` | `layouts/`, `pages/`, `components/`, `icons/` |
 | `static/css/` | `tokens.css`, `base.css`, `fonts.css`, `components/`, `pages/` |
