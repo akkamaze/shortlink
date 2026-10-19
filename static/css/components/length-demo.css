@@ -42,6 +42,11 @@
   color: var(--color-text-muted);
 }
 
+.length-demo__tag--custom {
+  background: rgba(90, 169, 255, 0.14);
+  color: var(--color-accent-soft);
+}
+
 .length-demo__body {
   position: relative;
   height: calc(var(--leading-sm) * 3);
@@ -72,6 +77,28 @@
 
 .length-demo__host {
   color: var(--color-text-faint);
+}
+
+/* Letters collapse their width as they leave, so the caret follows them. */
+.length-demo__short i {
+  display: inline-block;
+  overflow: hidden;
+  font-style: normal;
+  vertical-align: top;
+}
+
+.length-demo__caret-window {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.length-demo__caret {
+  display: inline-block;
+  width: var(--focus-width);
+  height: var(--leading-2xl);
+  margin-left: var(--space-0-5);
+  background: var(--color-accent);
+  animation: length-demo-blink 0.8s steps(1) infinite;
 }
 
 /* Lets the character count animate as a whole number. */
@@ -134,7 +161,8 @@
   right: 0;
 }
 
-/* 9 s loop: the original link · 2.0–3.2 s it shrinks · 8.4 s fade. */
+/* 9 s loop: the original link · 2.0–3.2 s it shrinks · 5.0–6.2 s the
+   slug is edited · 8.4 s fade. */
 
 .length-demo__caption--original { animation: length-demo-original 9s ease infinite; }
 .length-demo__caption--short { animation: length-demo-shortened 9s ease infinite; }
@@ -142,6 +170,11 @@
 .length-demo__short { animation: length-demo-short-in 9s ease infinite; }
 .length-demo__tag--random,
 .length-demo__saving-random { animation: length-demo-random 9s ease infinite; }
+.length-demo__tag--custom,
+.length-demo__saving-custom { animation: length-demo-custom 9s ease infinite; }
+.length-demo__out { animation: length-demo-letter-out 9s ease infinite; }
+.length-demo__in { animation: length-demo-letter-in 9s ease infinite; }
+.length-demo__caret-window { animation: length-demo-caret-window 9s linear infinite; }
 .length-demo__fill { animation: length-demo-shrink 9s var(--ease-out-expo) infinite; }
 .length-demo__count { animation: length-demo-count 9s var(--ease-out-expo) infinite; }
 
@@ -173,15 +206,45 @@
 
 @keyframes length-demo-random {
   0%, 32% { opacity: 0; }
-  36%, 100% { opacity: 1; }
+  36%, 57% { opacity: 1; }
+  60%, 100% { opacity: 0; }
 }
 
+@keyframes length-demo-custom {
+  0%, 62% { opacity: 0; }
+  66%, 100% { opacity: 1; }
+}
+
+@keyframes length-demo-letter-out {
+  0%, 55.5% { opacity: 1; max-width: 1em; }
+  56.5%, 100% { opacity: 0; max-width: 0; }
+}
+
+@keyframes length-demo-letter-in {
+  0%, 61% { opacity: 0; max-width: 0; }
+  62%, 100% { opacity: 1; max-width: 1em; }
+}
+
+@keyframes length-demo-caret-window {
+  0%, 52% { opacity: 0; }
+  53%, 72% { opacity: 1; }
+  74%, 100% { opacity: 0; }
+}
+
+@keyframes length-demo-blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Linear while the custom slug types, so the count keeps pace with it. */
 @keyframes length-demo-shrink {
   0%, 22% { transform: scaleX(1); }
-  36%, 100% { transform: scaleX(calc(var(--len-random) / var(--len-long))); }
+  36%, 61% { transform: scaleX(calc(var(--len-random) / var(--len-long))); animation-timing-function: linear; }
+  69%, 100% { transform: scaleX(calc(var(--len-custom) / var(--len-long))); }
 }
 
 @keyframes length-demo-count {
   0%, 22% { --chars: var(--len-long); }
-  36%, 100% { --chars: var(--len-random); }
+  36%, 61% { --chars: var(--len-random); animation-timing-function: linear; }
+  69%, 100% { --chars: var(--len-custom); }
 }

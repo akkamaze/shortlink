@@ -1,13 +1,23 @@
-<div class="length-demo" style="--len-long: {{ demo.long_len }}; --len-random: {{ demo.random_len }}">
+<div class="length-demo" style="--len-long: {{ demo.long_len }}; --len-random: {{ demo.random_len }}; --len-custom: {{ demo.custom_len }}">
   <div class="length-demo__head">
     <span class="length-demo__caption length-demo__caption--original">Original link</span>
     <span class="length-demo__caption length-demo__caption--short">Short link</span>
     <span class="length-demo__tag length-demo__tag--random">Random</span>
+    <span class="length-demo__tag length-demo__tag--custom">Custom</span>
   </div>
 
   <div class="length-demo__body">
     <div class="length-demo__long">{{ demo.long_url }}</div>
-    <div class="length-demo__short"><span class="length-demo__host">{{ demo.host }}</span>{{ demo.random_slug }}</div>
+    <div class="length-demo__short">
+      <span class="length-demo__host">{{ demo.host }}</span>
+      {%- for c in demo.random_slug -%}
+        <i class="length-demo__out" style="animation-delay: {{ c.delay_ms }}ms">{{ c.ch }}</i>
+      {%- endfor -%}
+      {%- for c in demo.custom_slug -%}
+        <i class="length-demo__in" style="animation-delay: {{ c.delay_ms }}ms">{{ c.ch }}</i>
+      {%- endfor -%}
+      <span class="length-demo__caret-window"><span class="length-demo__caret"></span></span>
+    </div>
   </div>
 
   <div class="length-demo__meter">
@@ -17,5 +27,6 @@
 
   <div class="length-demo__saving">
     <span class="length-demo__saving-random">{{ demo.random_saving }}% shorter</span>
+    <span class="length-demo__saving-custom">{{ demo.custom_saving }}% shorter</span>
   </div>
 </div>
