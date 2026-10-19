@@ -5,15 +5,14 @@
   animation: login-fade 0.2s ease both;
 }
 
-/* Floats over the grid so the card stays centred, at the same spot as the app header's brand. */
+/* Floats over the grid so the card stays centred. Full width with the
+   brand at the left edge, like the home page header. */
 .login__top {
   position: absolute;
   top: 0;
   right: 0;
   left: 0;
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: var(--space-8) var(--space-6);
+  padding: var(--space-8);
 }
 
 .login__brand {
@@ -99,7 +98,7 @@
 @media (max-width: 900px) {
   .login__top {
     position: static;
-    padding: var(--space-4);
+    padding: var(--space-3-5) var(--space-4);
   }
 
   .login__grid {
