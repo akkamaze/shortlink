@@ -2,6 +2,7 @@
   position: relative;
   min-height: 100vh;
   background-image: radial-gradient(at 25% 30%, rgba(27, 43, 61, 0.45), rgba(0, 0, 0, 0) 60%);
+  animation: login-fade 0.2s ease both;
 }
 
 /* Floats over the grid so the card stays centred, at the same spot as the app header's brand. */
@@ -126,6 +127,11 @@
   font-size: var(--text-xs);
   line-height: var(--leading-xs);
   color: var(--color-text-subtle);
+}
+
+@keyframes login-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes login-mini-in {
