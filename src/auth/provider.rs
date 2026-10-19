@@ -1,4 +1,5 @@
 use openidconnect::core::CoreJwsSigningAlgorithm;
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error as _};
 
 /// Sign-in providers the app knows about. Adding one means adding a variant
 /// here, an icon template and its OIDC settings.
@@ -54,5 +55,18 @@ impl Provider {
             Provider::Google => &["email", "profile"],
             Provider::Line => &["profile"],
         }
+    }
+}
+
+impl Serialize for Provider {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.slug())
+    }
+}
+
+impl<'de> Deserialize<'de> for Provider {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let slug = String::deserialize(deserializer)?;
+        Provider::from_slug(&slug).ok_or_else(|| D::Error::custom("unknown provider"))
     }
 }

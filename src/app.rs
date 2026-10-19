@@ -26,6 +26,10 @@ pub fn router(state: AppState, public_base_url: &Url) -> anyhow::Result<Router> 
         .route("/auth/{provider}/start", get(auth::routes::start))
         .route("/auth/{provider}/callback", get(auth::routes::callback))
         .route("/logout", post(auth::routes::logout))
+        .route("/link", get(pages::link::show))
+        .route("/link/confirm", post(auth::link_routes::confirm))
+        .route("/link/separate", post(auth::link_routes::separate))
+        .route("/link/cancel", post(auth::link_routes::cancel))
         .nest_service("/static", ServeDir::new("static"))
         .layer(csrf)
         .layer(middleware::from_fn_with_state(

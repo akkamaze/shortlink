@@ -1,6 +1,8 @@
 pub mod accounts;
 pub mod error;
+pub mod link_routes;
 pub mod oidc;
+pub mod pending_link;
 pub mod pending_login;
 pub mod picture;
 pub mod provider;

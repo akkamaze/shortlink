@@ -9,7 +9,7 @@ use openidconnect::{
 };
 
 use super::{
-    accounts::VerifiedIdentity,
+    accounts::{ProviderEmail, VerifiedIdentity},
     error::AuthError,
     pending_login::PendingLogin,
     picture::PictureUrl,
@@ -129,7 +129,10 @@ impl OidcProviders {
                 return Err(AuthError::EmailNotVerified);
             }
             let email = claims.email().ok_or(AuthError::EmailNotVerified)?;
-            Some(email.as_str().to_owned())
+            Some(ProviderEmail {
+                address: email.as_str().to_owned(),
+                verified: true,
+            })
         } else {
             None
         };
