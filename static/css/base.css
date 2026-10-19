@@ -16,6 +16,9 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
+  /* The self-hosted Inter has an optical-size axis the design's Google
+     Inter lacks; left on, large text switches to the tighter display cut. */
+  font-optical-sizing: none;
   -webkit-font-smoothing: antialiased;
 }
 
