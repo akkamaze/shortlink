@@ -1,0 +1,53 @@
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal --component rustfmt,clippy
+          rustup default 1.98.0
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Lint
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      # Throwaway passwords for this run's database only.
+      - name: Start Postgres
+        run: |
+          {
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
+            echo "SHORTLINK_OWNER_PASSWORD=$(openssl rand -hex 16)"
+            echo "SHORTLINK_APP_PASSWORD=$(openssl rand -hex 16)"
+          } > .env
+          docker compose up -d --wait postgres
+
+      - name: Test
+        run: |
+          set -a && . ./.env && set +a
+          export TEST_DATABASE_URL="postgres://shortlink_app:$SHORTLINK_APP_PASSWORD@127.0.0.1:5432/shortlink_test"
+          export TEST_MIGRATION_DATABASE_URL="postgres://shortlink_owner:$SHORTLINK_OWNER_PASSWORD@127.0.0.1:5432/shortlink_test"
+          cargo test --locked
