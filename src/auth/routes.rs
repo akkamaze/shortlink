@@ -29,7 +29,10 @@ pub async fn start(
     private: PrivateCookieJar,
 ) -> Result<(PrivateCookieJar, Redirect), StatusCode> {
     let provider = Provider::from_slug(&slug).ok_or(StatusCode::NOT_FOUND)?;
-    let (url, pending) = state.oidc.begin(provider).ok_or(StatusCode::NOT_FOUND)?;
+    let (url, pending) = state
+        .providers
+        .begin(provider)
+        .ok_or(StatusCode::NOT_FOUND)?;
 
     let private = private.add(pending.into_cookie(state.secure_cookies));
     Ok((private, Redirect::to(url.as_str())))
@@ -99,7 +102,7 @@ async fn complete_sign_in(
         .ok_or(AuthError::Expired)?;
     let code = params.code.ok_or(AuthError::Expired)?;
 
-    let identity = state.oidc.finish(pending, code).await?;
+    let identity = state.providers.finish(pending, code).await?;
     match accounts::sign_in(&state.db, &state.keys, &identity).await? {
         SignIn::Signed(user_id) => Ok(Outcome::Signed {
             user_id,

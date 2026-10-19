@@ -3,7 +3,11 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error as _};
 
 /// Hosts providers serve profile pictures from. The CSP `img-src` must list
 /// the same hosts, or the browser blocks the image.
-pub const PICTURE_HOSTS: [&str; 2] = ["profile.line-scdn.net", "lh3.googleusercontent.com"];
+pub const PICTURE_HOSTS: [&str; 3] = [
+    "profile.line-scdn.net",
+    "lh3.googleusercontent.com",
+    "platform-lookaside.fbsbx.com",
+];
 
 /// A profile picture URL the page may show: https, on a provider's picture
 /// host, with no credentials in it.

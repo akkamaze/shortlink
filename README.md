@@ -19,7 +19,8 @@ Fill in `.env`: the three Postgres passwords (the app and owner ones also go ins
 For sign-in without real Google, set `GOOGLE_ISSUER_URL=http://localhost:8080/default` and any
 client id and secret.
 LINE is optional; to try it against the mock, set `LINE_ISSUER_URL=http://localhost:8080/line`
-and any `LINE_CLIENT_ID` and `LINE_CLIENT_SECRET`.
+and any `LINE_CLIENT_ID` and `LINE_CLIENT_SECRET`. Facebook is optional too and has no mock: use a
+Meta app in development mode, which accepts a `localhost` redirect URI.
 
 ```bash
 docker compose --profile dev up -d
@@ -30,7 +31,11 @@ cargo run
 
 Open `http://localhost:3100`. "Continue with Google" goes to the mock provider; type any
 username to sign in as `<username>@example.com`. "Continue with LINE" does the same without
-an email, like the real LINE. Each provider is its own account.
+an email, like the real LINE.
+
+One email opens one account. When a new sign-in brings an email that another account
+already has, `/link` asks the person to log in the way they did before and then confirm
+before the two are joined; it can also start a separate account instead.
 
 ## Test
 

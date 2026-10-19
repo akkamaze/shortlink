@@ -13,7 +13,19 @@ pub struct Config {
     pub cookie_key: Key,
     pub data_keys: DataKeys,
     pub providers: Vec<OidcProviderConfig>,
+    pub facebook: Option<FacebookConfig>,
 }
+
+#[derive(Clone)]
+pub struct FacebookConfig {
+    pub client_id: String,
+    pub client_secret: String,
+    pub dialog_url: Url,
+    pub graph_url: Url,
+}
+
+const FACEBOOK_DIALOG_URL: &str = "https://www.facebook.com/v26.0/dialog/oauth";
+const FACEBOOK_GRAPH_URL: &str = "https://graph.facebook.com/v26.0/";
 
 pub struct OidcProviderConfig {
     pub provider: Provider,
@@ -35,6 +47,7 @@ impl Config {
             cookie_key: cookie_key(&secret("COOKIE_KEY")?)?,
             data_keys: data_keys(&secret("DATA_KEY")?)?,
             providers: providers(&public_base_url)?,
+            facebook: facebook()?,
             public_base_url,
         })
     }
@@ -56,6 +69,26 @@ fn providers(public_base_url: &Url) -> anyhow::Result<Vec<OidcProviderConfig>> {
     }
 
     Ok(providers)
+}
+
+/// On when `FACEBOOK_CLIENT_ID` is set. The two URLs only change to point
+/// tests or a local mock at another server.
+fn facebook() -> anyhow::Result<Option<FacebookConfig>> {
+    if !std::env::var("FACEBOOK_CLIENT_ID").is_ok_and(|id| !id.trim().is_empty()) {
+        return Ok(None);
+    }
+
+    let url = |name: &str, default: &str| {
+        let raw = std::env::var(name).unwrap_or_else(|_| default.to_owned());
+        Url::parse(&raw).with_context(|| format!("{name} is not a valid URL"))
+    };
+
+    Ok(Some(FacebookConfig {
+        client_id: required("FACEBOOK_CLIENT_ID")?,
+        client_secret: secret("FACEBOOK_CLIENT_SECRET")?,
+        dialog_url: url("FACEBOOK_DIALOG_URL", FACEBOOK_DIALOG_URL)?,
+        graph_url: url("FACEBOOK_GRAPH_URL", FACEBOOK_GRAPH_URL)?,
+    }))
 }
 
 fn provider_settings(

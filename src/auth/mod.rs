@@ -1,5 +1,6 @@
 pub mod accounts;
 pub mod error;
+pub mod facebook;
 pub mod link_routes;
 pub mod oidc;
 pub mod pending_link;
@@ -9,3 +10,4 @@ pub mod provider;
 pub mod provider_error;
 pub mod routes;
 pub mod session;
+pub mod sign_in_providers;

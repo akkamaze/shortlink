@@ -11,7 +11,7 @@ use openidconnect::{
 use super::{
     accounts::{ProviderEmail, VerifiedIdentity},
     error::AuthError,
-    pending_login::PendingLogin,
+    pending_login::{LoginProof, PendingLogin},
     picture::PictureUrl,
     provider::Provider,
     provider_error::{describe_claims_error, describe_token_error},
@@ -88,8 +88,10 @@ impl OidcProviders {
         let pending = PendingLogin {
             provider,
             state: state.into_secret(),
-            nonce: nonce.secret().clone(),
-            pkce_verifier: pkce_verifier.into_secret(),
+            proof: LoginProof::Oidc {
+                nonce: nonce.secret().clone(),
+                pkce_verifier: pkce_verifier.into_secret(),
+            },
         };
         Some((url, pending))
     }
@@ -105,11 +107,18 @@ impl OidcProviders {
             .configured(pending.provider)
             .ok_or(AuthError::Expired)?;
         let client = &configured.client;
+        let LoginProof::Oidc {
+            nonce,
+            pkce_verifier,
+        } = pending.proof
+        else {
+            return Err(AuthError::Expired);
+        };
 
         let tokens = client
             .exchange_code(AuthorizationCode::new(code))
             .map_err(|_| AuthError::Provider("provider has no token endpoint".to_owned()))?
-            .set_pkce_verifier(PkceCodeVerifier::new(pending.pkce_verifier))
+            .set_pkce_verifier(PkceCodeVerifier::new(pkce_verifier))
             .request_async(&self.http)
             .await
             .map_err(|error| AuthError::Provider(describe_token_error(&error).to_owned()))?;
@@ -121,7 +130,7 @@ impl OidcProviders {
             .id_token_verifier()
             .set_allowed_algs(configured.id_token_algs.iter().cloned());
         let claims = id_token
-            .claims(&verifier, &Nonce::new(pending.nonce))
+            .claims(&verifier, &Nonce::new(nonce))
             .map_err(|error| AuthError::Provider(describe_claims_error(&error).to_owned()))?;
 
         let email = if pending.provider.vouches_for_email() {
@@ -199,7 +208,7 @@ fn accepted_id_token_algs(
     algs
 }
 
-fn callback_url(base: &Url, provider: Provider) -> anyhow::Result<RedirectUrl> {
+pub(super) fn callback_url(base: &Url, provider: Provider) -> anyhow::Result<RedirectUrl> {
     let url = base
         .join(&format!("/auth/{}/callback", provider.slug()))
         .context("cannot build the callback URL")?;

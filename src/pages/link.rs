@@ -49,7 +49,7 @@ pub async fn show(
     let step = if signed_in.is_some_and(|user| user.id == link.holder) {
         LinkStep::Confirm
     } else {
-        let enabled = state.oidc.enabled();
+        let enabled = state.providers.enabled();
         let providers = accounts::sign_in_providers(&state.db, link.holder).await?;
         LinkStep::SignInFirst {
             buttons: holder_buttons(&providers, &enabled, link.identity.provider),

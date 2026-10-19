@@ -6,7 +6,7 @@ use tracing_subscriber::EnvFilter;
 
 use shortlink::{
     app,
-    auth::{oidc::OidcProviders, session},
+    auth::{session, sign_in_providers::SignInProviders},
     config::Config,
     db,
     state::AppState,
@@ -30,8 +30,8 @@ async fn main() -> anyhow::Result<()> {
         SESSION_CLEANUP_PERIOD,
     ));
 
-    let oidc = OidcProviders::discover(&config).await?;
-    let state = AppState::new(&config, pool, oidc);
+    let providers = SignInProviders::connect(&config).await?;
+    let state = AppState::new(&config, pool, providers);
     let router = app::router(state, &config.public_base_url)?;
 
     let listener = TcpListener::bind(config.bind_addr)
