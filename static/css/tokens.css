@@ -54,7 +54,7 @@
   --leading-2xl: 36px;
   --text-display: 40px;
   --text-hero: clamp(44px, 5.6vw, 80px);
-  --leading-display: 1.08;
+  --leading-display: 1.14;
   --leading-none: 1;
 
   --weight-book: 450;
@@ -62,7 +62,7 @@
   --weight-strong: 550;
   --weight-bold: 600;
 
-  --tracking-display: -0.06em;
+  --tracking-display: -0.065em;
   --tracking-brand: -0.055em;
   --tracking-tight: -0.03em;
   --tracking-title: -0.025em;
