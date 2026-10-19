@@ -17,6 +17,12 @@
   word-break: break-all;
 }
 
+/* A 1px background line grows across the link; on a wrapped inline span
+   the lines join end to end, so the strike runs line after line. */
+.length-demo__long-text {
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 55% / 0% 1px;
+}
+
 .length-demo__short {
   margin-top: var(--space-3);
   font-size: var(--text-display);
@@ -92,10 +98,12 @@
   white-space: nowrap;
 }
 
-/* 9 s loop: the original link · 2.0–3.2 s the short link appears · 5.0–6.2 s
-   the slug is edited · 8.4 s fade. */
+/* 9 s loop: the original link in full · 1.4–2.5 s it is struck out · 2.5 s
+   the random short link appears · 5.0–6.2 s only the slug is edited to a
+   custom one · 8.4 s fade. */
 
 .length-demo__long { animation: length-demo-long-out 9s ease infinite; }
+.length-demo__long-text { animation: length-demo-strike 9s var(--ease-out-expo) infinite; }
 .length-demo__short,
 .length-demo__meta { animation: length-demo-short-in 9s ease infinite; }
 .length-demo__saving-random { animation: length-demo-random 9s ease infinite; }
@@ -111,8 +119,13 @@
   98%, 100% { opacity: 0; }
 }
 
+@keyframes length-demo-strike {
+  0%, 16% { background-size: 0% 1px; }
+  28%, 100% { background-size: 100% 1px; }
+}
+
 @keyframes length-demo-long-out {
-  0%, 22% { opacity: 1; }
+  0%, 24% { opacity: 1; }
   30%, 100% { opacity: 0.4; }
 }
 
@@ -169,6 +182,10 @@
 
   .length-demo__long {
     opacity: 0.4;
+  }
+
+  .length-demo__long-text {
+    background-size: 100% 1px;
   }
 
   .length-demo__saving-random,
