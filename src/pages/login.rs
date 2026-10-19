@@ -1,13 +1,13 @@
 use askama::Template;
 use askama_web::WebTemplate;
 
-use crate::pages::link_morph::{LinkMorph, login_demos};
+use crate::pages::length_demo::{LengthDemo, login_demo};
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/login.html")]
 pub struct LoginPage {
     pub buttons: Vec<LoginButton>,
-    pub demos: Vec<LinkMorph>,
+    pub demo: LengthDemo,
 }
 
 pub struct LoginButton {
@@ -30,7 +30,7 @@ pub async fn show() -> LoginPage {
             .into_iter()
             .map(|(slug, label)| LoginButton { slug, label })
             .collect(),
-        demos: login_demos(),
+        demo: login_demo(),
     }
 }
 
