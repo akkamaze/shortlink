@@ -1,0 +1,21 @@
+{
+  "interactiveLogin": true,
+  "tokenCallbacks": [
+    {
+      "issuerId": "default",
+      "requestMappings": [
+        {
+          "requestParam": "subject",
+          "match": "*",
+          "claims": {
+            "sub": "${subject}",
+            "aud": ["${clientId}"],
+            "email": "${subject}@example.com",
+            "email_verified": true,
+            "name": "${subject}"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -17,3 +17,12 @@ services:
       timeout: 3s
       retries: 30
 
+  mock-oidc:
+    profiles: ["dev"]
+    image: ghcr.io/navikt/mock-oauth2-server:6.1.1
+    environment:
+      JSON_CONFIG_PATH: /config/mock-oidc.json
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./dev/mock-oidc.json:/config/mock-oidc.json:ro

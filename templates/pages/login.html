@@ -29,6 +29,10 @@
       <h1 id="login-title" class="login__title">Log in to shortlink</h1>
       <p class="login__sub">New here? Logging in creates your account.</p>
 
+      {% if let Some(message) = problem %}
+        <p class="login__error" role="alert">{{ message }}</p>
+      {% endif %}
+
       <div class="login__providers">
         {% for provider in buttons %}
           {% include "components/provider_button.html" %}

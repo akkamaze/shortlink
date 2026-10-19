@@ -1,0 +1,31 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}shortlink{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="/static/css/components/button.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/dot-grid.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/pages/home.css?v={{ crate::assets::VERSION }}">
+{% endblock %}
+
+{% block body %}
+<div class="home">
+  <div class="dot-grid" aria-hidden="true"></div>
+
+  <header class="home__top">
+    <a class="home__brand" href="/app">shortlink</a>
+
+    <form method="post" action="/logout">
+      <button class="btn btn--ghost" type="submit">Log out</button>
+    </form>
+  </header>
+
+  <main class="home__main">
+    <h1 class="home__title">Hi, {{ display_name }}</h1>
+    <p class="home__sub">Signed in as {{ email }}. Your links page is coming next.</p>
+  </main>
+
+  {% include "components/site_footer.html" %}
+</div>
+{% endblock %}
