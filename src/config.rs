@@ -30,3 +30,19 @@ fn required(name: &str) -> anyhow::Result<String> {
         _ => bail!("{name} is not set; see .env.example"),
     }
 }
+
+/// Reads `NAME_FILE` when set, so Docker secrets can be mounted as files,
+/// and falls back to `NAME` for local development.
+pub fn secret(name: &str) -> anyhow::Result<String> {
+    let file_var = format!("{name}_FILE");
+    let Ok(path) = std::env::var(&file_var) else {
+        return required(name);
+    };
+
+    let value = std::fs::read_to_string(&path)
+        .with_context(|| format!("cannot read {file_var} at {path}"))?;
+    match value.trim() {
+        "" => bail!("{file_var} points at an empty file"),
+        value => Ok(value.to_owned()),
+    }
+}

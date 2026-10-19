@@ -4,13 +4,17 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.98"
 publish = false
+default-run = "shortlink"
 
 [dependencies]
 anyhow = "1"
 askama = "0.16.1"
 askama_web = { version = "0.16.0", features = ["axum-0.8"] }
 axum = "0.8.9"
+deadpool-postgres = "0.14.2"
+refinery = { version = "0.10.0", features = ["tokio-postgres"] }
 tokio = { version = "1.53.3", features = ["macros", "rt-multi-thread", "net", "signal"] }
+tokio-postgres = "0.7.18"
 tower-http = { version = "0.7.1", features = ["fs", "trace"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }

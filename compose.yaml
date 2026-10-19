@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      SHORTLINK_OWNER_PASSWORD: ${SHORTLINK_OWNER_PASSWORD:?set SHORTLINK_OWNER_PASSWORD in .env}
+      SHORTLINK_APP_PASSWORD: ${SHORTLINK_APP_PASSWORD:?set SHORTLINK_APP_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ${PG_DATA_DIR:-./.data/postgres}:/var/lib/postgresql
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shortlink"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
