@@ -11,14 +11,20 @@ anyhow = "1"
 askama = "0.16.1"
 askama_web = { version = "0.16.0", features = ["axum-0.8"] }
 axum = "0.8.9"
+chacha20poly1305 = "0.11.0"
 deadpool-postgres = "0.14.2"
+hkdf = "0.13.0"
+hmac = "0.13.0"
 refinery = { version = "0.10.0", features = ["tokio-postgres"] }
+sha2 = "0.11.1"
+thiserror = "2.0.21"
 tokio = { version = "1.53.3", features = ["macros", "rt-multi-thread", "net", "signal"] }
 tokio-postgres = "0.7.18"
 tower-http = { version = "0.7.1", features = ["fs", "trace"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 url = "2.5.8"
+uuid = { version = "1.28.0", features = ["v4"] }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
