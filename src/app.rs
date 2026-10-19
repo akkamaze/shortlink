@@ -9,7 +9,7 @@ use axum::{
 use tower_http::{csrf::CsrfLayer, services::ServeDir, trace::TraceLayer};
 use url::Url;
 
-use crate::{auth, pages, request_log, security_headers, state::AppState};
+use crate::{auth, links, pages, request_log, security_headers, state::AppState};
 
 pub fn router(state: AppState, public_base_url: &Url) -> anyhow::Result<Router> {
     let site_headers = Arc::new(security_headers::site_headers(state.secure_cookies));
@@ -30,6 +30,7 @@ pub fn router(state: AppState, public_base_url: &Url) -> anyhow::Result<Router> 
         .route("/link/confirm", post(auth::link_routes::confirm))
         .route("/link/separate", post(auth::link_routes::separate))
         .route("/link/cancel", post(auth::link_routes::cancel))
+        .merge(links::routes::router())
         .nest_service("/static", ServeDir::new("static"))
         .layer(csrf)
         .layer(middleware::from_fn_with_state(
