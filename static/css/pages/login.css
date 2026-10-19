@@ -112,6 +112,10 @@
     font-size: var(--text-display);
   }
 
+  .login__art .morph-card {
+    display: none;
+  }
+
   .login__panel {
     padding: var(--space-7) var(--space-5) var(--space-5);
   }

@@ -4,6 +4,7 @@
 
 {% block styles %}
   <link rel="stylesheet" href="/static/css/components/provider-button.css">
+  <link rel="stylesheet" href="/static/css/components/link-morph.css">
   <link rel="stylesheet" href="/static/css/pages/login.css">
 {% endblock %}
 
@@ -16,6 +17,8 @@
   <main class="login__grid" aria-labelledby="login-title">
     <section class="login__art" aria-hidden="true">
       <p class="login__hero">Less link.<br><span>More possibility.</span></p>
+
+      {% include "components/link_morph.html" %}
     </section>
 
     <section class="login__panel">
