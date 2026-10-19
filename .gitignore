@@ -2,3 +2,4 @@
 .env
 .claude/launch.json
 /.data
+.idea/
