@@ -1,82 +1,33 @@
+/* The demo reads as more of the hero: plain type, the hero's two tones. */
 .length-demo {
-  position: relative;
-  width: 340px;
-  max-width: 100%;
-  margin-top: var(--space-12);
-  padding: var(--space-5) var(--space-6);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-tile);
-  background: rgba(14, 21, 31, 0.92);
-  box-shadow: var(--shadow-float);
+  max-width: 520px;
+  margin-top: var(--space-10);
   animation: length-demo-loop 9s ease infinite;
 }
 
-.length-demo__head {
-  position: relative;
-  height: var(--leading-2xs);
-}
-
-.length-demo__caption,
-.length-demo__tag {
-  position: absolute;
-  top: 0;
-  font-size: var(--text-2xs);
-  line-height: var(--leading-2xs);
-  letter-spacing: var(--tracking-wide);
-}
-
-.length-demo__caption {
-  left: 0;
-  color: var(--color-text-subtle);
-}
-
-.length-demo__caption--short {
-  color: var(--color-success);
-}
-
-.length-demo__tag {
-  right: 0;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-pill);
-  background: rgba(237, 243, 250, 0.06);
-  color: var(--color-text-muted);
-}
-
-.length-demo__tag--custom {
-  background: rgba(90, 169, 255, 0.14);
-  color: var(--color-accent-soft);
-}
-
-.length-demo__body {
-  position: relative;
-  height: calc(var(--leading-sm) * 3);
-  margin-top: var(--space-2-5);
+.length-demo p {
+  margin: 0;
 }
 
 .length-demo__long {
-  position: absolute;
-  inset: 0;
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   line-height: var(--leading-sm);
-  color: #8e9bad;
+  color: var(--color-text-subtle);
   word-break: break-all;
 }
 
 .length-demo__short {
-  position: absolute;
-  top: var(--space-2);
-  right: 0;
-  left: 0;
+  margin-top: var(--space-3);
+  font-size: var(--text-display);
+  line-height: var(--leading-display);
+  font-weight: var(--weight-book);
+  letter-spacing: var(--tracking-display);
   white-space: nowrap;
-  font-size: var(--text-2xl);
-  line-height: var(--leading-2xl);
-  font-weight: var(--weight-medium);
-  letter-spacing: var(--tracking-tight);
 }
 
 .length-demo__host {
-  color: var(--color-text-faint);
+  color: var(--color-text-muted);
 }
 
 /* Letters collapse their width as they leave, so the caret follows them. */
@@ -95,10 +46,17 @@
 .length-demo__caret {
   display: inline-block;
   width: var(--focus-width);
-  height: var(--leading-2xl);
-  margin-left: var(--space-0-5);
+  height: calc(var(--text-display) * 0.9);
+  margin: calc(var(--text-display) * 0.15) 0 0 var(--space-1);
   background: var(--color-accent);
   animation: length-demo-blink 0.8s steps(1) infinite;
+}
+
+.length-demo__meta {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-subtle);
 }
 
 /* Lets the character count animate as a whole number. */
@@ -108,74 +66,43 @@
   initial-value: 0;
 }
 
-.length-demo__meter {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-3);
-}
-
-.length-demo__track {
-  flex: 1;
-  height: var(--space-1-5);
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: rgba(237, 243, 250, 0.08);
-}
-
-.length-demo__fill {
-  display: block;
-  height: 100%;
-  border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, #5aa9ff, var(--color-accent));
-  transform-origin: left;
-}
-
 .length-demo__count {
   --chars: var(--len-long);
 
-  min-width: 96px;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  text-align: right;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
   counter-reset: chars var(--chars);
 }
 
 .length-demo__count::after {
-  content: counter(chars) " characters";
+  content: counter(chars);
 }
 
 .length-demo__saving {
   position: relative;
-  height: var(--leading-xs);
-  margin-top: var(--space-1);
-  font-size: var(--text-xs);
-  line-height: var(--leading-xs);
+  display: inline-block;
+  min-width: 120px;
+  vertical-align: top;
   color: var(--color-success);
-  text-align: right;
 }
 
 .length-demo__saving span {
   position: absolute;
-  right: 0;
+  left: 0;
+  white-space: nowrap;
 }
 
-/* 9 s loop: the original link · 2.0–3.2 s it shrinks · 5.0–6.2 s the
-   slug is edited · 8.4 s fade. */
+/* 9 s loop: the original link · 2.0–3.2 s the short link appears · 5.0–6.2 s
+   the slug is edited · 8.4 s fade. */
 
-.length-demo__caption--original { animation: length-demo-original 9s ease infinite; }
-.length-demo__caption--short { animation: length-demo-shortened 9s ease infinite; }
 .length-demo__long { animation: length-demo-long-out 9s ease infinite; }
-.length-demo__short { animation: length-demo-short-in 9s ease infinite; }
-.length-demo__tag--random,
+.length-demo__short,
+.length-demo__meta { animation: length-demo-short-in 9s ease infinite; }
 .length-demo__saving-random { animation: length-demo-random 9s ease infinite; }
-.length-demo__tag--custom,
 .length-demo__saving-custom { animation: length-demo-custom 9s ease infinite; }
 .length-demo__out { animation: length-demo-letter-out 9s ease infinite; }
 .length-demo__in { animation: length-demo-letter-in 9s ease infinite; }
 .length-demo__caret-window { animation: length-demo-caret-window 9s linear infinite; }
-.length-demo__fill { animation: length-demo-shrink 9s var(--ease-out-expo) infinite; }
 .length-demo__count { animation: length-demo-count 9s var(--ease-out-expo) infinite; }
 
 @keyframes length-demo-loop {
@@ -184,19 +111,9 @@
   98%, 100% { opacity: 0; }
 }
 
-@keyframes length-demo-original {
-  0%, 22% { opacity: 1; }
-  26%, 100% { opacity: 0; }
-}
-
-@keyframes length-demo-shortened {
-  0%, 24% { opacity: 0; }
-  28%, 100% { opacity: 1; }
-}
-
 @keyframes length-demo-long-out {
-  0%, 22% { opacity: 1; transform: none; filter: none; }
-  30%, 100% { opacity: 0; transform: translateY(-6px); filter: blur(3px); }
+  0%, 22% { opacity: 1; }
+  30%, 100% { opacity: 0.4; }
 }
 
 @keyframes length-demo-short-in {
@@ -237,14 +154,8 @@
 }
 
 /* Linear while the custom slug types, so the count keeps pace with it. */
-@keyframes length-demo-shrink {
-  0%, 22% { transform: scaleX(1); }
-  36%, 61% { transform: scaleX(calc(var(--len-random) / var(--len-long))); animation-timing-function: linear; }
-  69%, 100% { transform: scaleX(calc(var(--len-custom) / var(--len-long))); }
-}
-
 @keyframes length-demo-count {
-  0%, 22% { --chars: var(--len-long); }
+  0%, 28% { --chars: var(--len-long); }
   36%, 61% { --chars: var(--len-random); animation-timing-function: linear; }
   69%, 100% { --chars: var(--len-custom); }
 }
@@ -256,9 +167,10 @@
     animation: none !important;
   }
 
-  .length-demo__caption--original,
-  .length-demo__long,
-  .length-demo__tag--random,
+  .length-demo__long {
+    opacity: 0.4;
+  }
+
   .length-demo__saving-random,
   .length-demo__out,
   .length-demo__caret-window {
@@ -267,10 +179,6 @@
 
   .length-demo__out {
     max-width: 0;
-  }
-
-  .length-demo__fill {
-    transform: scaleX(calc(var(--len-custom) / var(--len-long)));
   }
 
   .length-demo__count {
