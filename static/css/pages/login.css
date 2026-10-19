@@ -1,5 +1,8 @@
+/* A column so the footer sits at the bottom and the grid fills the rest. */
 .login {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background-image: radial-gradient(at 25% 30%, rgba(27, 43, 61, 0.45), rgba(0, 0, 0, 0) 60%);
   animation: login-fade 0.2s ease both;
@@ -28,8 +31,9 @@
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 400px);
   align-items: center;
   gap: var(--space-20);
+  flex: 1;
+  width: 100%;
   max-width: var(--container-max);
-  min-height: 100vh;
   margin: 0 auto;
   padding: var(--space-16) var(--space-8);
 }

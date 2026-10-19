@@ -1,0 +1,71 @@
+/* The Synqloud footer from the design: the parent brand on the left, a
+   link to its site on the right, full width like the header. */
+.site-footer {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--space-4);
+  padding: var(--space-5) var(--space-8) var(--space-5);
+}
+
+.site-footer__mark,
+.site-footer__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  text-decoration: none;
+}
+
+.site-footer__mark {
+  gap: var(--space-3);
+  transition: opacity 0.2s;
+}
+
+.site-footer__mark:hover {
+  opacity: 0.8;
+}
+
+/* Synqloud's own wordmark keeps its own tight tracking. */
+.site-footer__brand {
+  font-size: var(--text-mark);
+  line-height: var(--leading-none);
+  font-weight: var(--weight-book);
+  letter-spacing: var(--tracking-mark);
+  color: var(--color-text);
+}
+
+.site-footer__divider {
+  width: 1px;
+  height: var(--space-3-5);
+  background: rgba(237, 243, 250, 0.18);
+}
+
+.site-footer__tagline,
+.site-footer__link {
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+}
+
+.site-footer__link {
+  gap: var(--space-1);
+}
+
+.site-footer__link:hover {
+  color: var(--color-text);
+}
+
+.site-footer .icon-arrow-up-right {
+  width: var(--text-2xs);
+  height: var(--text-2xs);
+}
+
+@media (max-width: 900px) {
+  .site-footer {
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-7) var(--space-4) var(--space-6);
+  }
+}

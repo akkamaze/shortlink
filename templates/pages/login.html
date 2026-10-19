@@ -5,6 +5,7 @@
 {% block styles %}
   <link rel="stylesheet" href="/static/css/components/provider-button.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/components/length-demo.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/pages/login.css?v={{ crate::assets::VERSION }}">
 {% endblock %}
 
@@ -34,5 +35,7 @@
       <p class="login__terms">By continuing, you agree to the Terms of Service and Privacy Policy.</p>
     </section>
   </main>
+
+  {% include "components/site_footer.html" %}
 </div>
 {% endblock %}
