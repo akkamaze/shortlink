@@ -14,7 +14,11 @@ pub struct LoginButton {
 
 /// Every way to log in the design shows, in its order. None has a provider
 /// behind it yet, so each is shown but cannot be pressed.
-const DESIGN_ORDER: [(&str, &str); 2] = [("google", "Google"), ("facebook", "Facebook")];
+const DESIGN_ORDER: [(&str, &str); 3] = [
+    ("google", "Google"),
+    ("facebook", "Facebook"),
+    ("line", "LINE"),
+];
 
 pub async fn show() -> LoginPage {
     LoginPage {
@@ -40,8 +44,15 @@ mod tests {
             .map(|(at, _)| html[at..].split('<').next().unwrap())
             .collect();
 
-        assert_eq!(labels, ["Continue with Google", "Continue with Facebook"]);
+        assert_eq!(
+            labels,
+            [
+                "Continue with Google",
+                "Continue with Facebook",
+                "Continue with LINE"
+            ]
+        );
         assert!(!html.contains("/auth/"), "no button links to a sign-in yet");
-        assert_eq!(html.matches(r#"aria-disabled="true""#).count(), 2);
+        assert_eq!(html.matches(r#"aria-disabled="true""#).count(), 3);
     }
 }

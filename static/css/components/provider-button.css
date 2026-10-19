@@ -45,6 +45,11 @@
   color: #ffffff;
 }
 
+.provider-btn--line {
+  background: #06c755;
+  color: #ffffff;
+}
+
 .provider-btn--soon,
 .provider-btn--soon:hover {
   opacity: 0.4;
