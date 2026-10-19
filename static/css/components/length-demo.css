@@ -42,6 +42,51 @@
   word-break: break-all;
 }
 
+/* Lets the character count animate as a whole number. */
+@property --chars {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+
+.length-demo__meter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.length-demo__track {
+  flex: 1;
+  height: var(--space-1-5);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: rgba(237, 243, 250, 0.08);
+}
+
+.length-demo__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, #5aa9ff, var(--color-accent));
+  transform-origin: left;
+}
+
+.length-demo__count {
+  --chars: var(--len-long);
+
+  min-width: 96px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-align: right;
+  counter-reset: chars var(--chars);
+}
+
+.length-demo__count::after {
+  content: counter(chars) " characters";
+}
+
 @keyframes length-demo-in {
   from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: none; }
