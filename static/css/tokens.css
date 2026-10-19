@@ -1,0 +1,85 @@
+:root {
+  --color-bg: #080e17;
+  --color-surface: #0e151f;
+  --color-surface-sunken: #0a1018;
+  --color-text: #edf3fa;
+  --color-text-muted: #acb9ca;
+  --color-text-subtle: #7c8a9c;
+  --color-text-faint: #5c6a7c;
+  --color-accent: #a9c3de;
+  --color-accent-soft: #c9daec;
+  --color-success: #9fd6b4;
+  --color-danger: #f0b79e;
+
+  --border-strong: rgba(237, 243, 250, 0.12);
+  --border-soft: rgba(237, 243, 250, 0.06);
+  --focus-ring: rgba(150, 200, 255, 0.7);
+
+  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Spacing: 4px steps, named like Tailwind's scale (--space-4 is 16px). */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-3-5: 14px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Type: each size comes with its line height. */
+  --text-2xs: 11px;
+  --leading-2xs: 16px;
+  --text-xs: 12px;
+  --leading-xs: 18px;
+  --text-sm: 14px;
+  --leading-sm: 20px;
+  --text-md: 15px;
+  --leading-md: 22px;
+  --text-lg: 20px;
+  --leading-lg: 28px;
+  --text-xl: 26px;
+  --leading-xl: 32px;
+  --text-2xl: 28px;
+  --leading-2xl: 36px;
+  --text-display: 40px;
+  --text-hero: clamp(44px, 5.6vw, 80px);
+  --leading-display: 1.08;
+  --leading-none: 1;
+
+  --weight-book: 450;
+  --weight-medium: 500;
+  --weight-strong: 550;
+  --weight-bold: 600;
+
+  --tracking-display: -0.06em;
+  --tracking-brand: -0.055em;
+  --tracking-tight: -0.03em;
+  --tracking-title: -0.025em;
+  --tracking-wide: 0.02em;
+  --tracking-caps: 0.04em;
+
+  --radius-card: 24px;
+  --radius-tile: 16px;
+  --radius-control: 12px;
+  --radius-pill: 999px;
+
+  --control-height: 48px;
+  --icon-md: 20px;
+  --focus-width: 2px;
+  --container-max: 1120px;
+  --measure-narrow: 300px;
+
+  --shadow-float: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
