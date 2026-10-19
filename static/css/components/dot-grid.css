@@ -1,0 +1,12 @@
+/* The home page's dotted backdrop: a 1px dot every 28px, clearest near the
+   top centre and fading out towards the edges. */
+.dot-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(237, 243, 250, 0.16) 1px, transparent 1.2px);
+  background-size: var(--space-7) var(--space-7);
+  -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 30%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 30%, #000 20%, transparent 75%);
+}

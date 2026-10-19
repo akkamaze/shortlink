@@ -5,12 +5,15 @@
 {% block styles %}
   <link rel="stylesheet" href="/static/css/components/provider-button.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/components/length-demo.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/dot-grid.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/pages/login.css?v={{ crate::assets::VERSION }}">
 {% endblock %}
 
 {% block body %}
 <div class="login">
+  <div class="dot-grid" aria-hidden="true"></div>
+
   <header class="login__top">
     <a class="login__brand" href="/login">shortlink</a>
   </header>
