@@ -2473,6 +2473,7 @@ dependencies = [
  "rand 0.10.3",
  "refinery",
  "serde",
+ "serde_json",
  "sha2 0.11.1",
  "thiserror 2.0.21",
  "time",
@@ -3064,6 +3065,7 @@ checksum = "7cc1186384beb7dd8eedea376413fd654937285ea6c9cfbb928dc3043ea4b606"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
+ "serde_core",
  "wasm-bindgen",
 ]
 

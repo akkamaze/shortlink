@@ -90,7 +90,7 @@ pub async fn show(
     }
 
     let status = problem.map_or(StatusCode::OK, Problem::status);
-    let page = LoginPage::new(problem, &state.oidc.enabled());
+    let page = LoginPage::new(problem, &state.providers.enabled());
 
     (status, page).into_response()
 }

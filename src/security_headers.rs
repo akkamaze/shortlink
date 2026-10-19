@@ -13,7 +13,8 @@ use axum::{
 /// providers' profile picture hosts in `PICTURE_HOSTS`.
 const CONTENT_SECURITY_POLICY: &str = "default-src 'none'; style-src 'self'; \
      style-src-attr 'unsafe-inline'; font-src 'self'; \
-     img-src 'self' https://profile.line-scdn.net https://lh3.googleusercontent.com; \
+     img-src 'self' https://profile.line-scdn.net https://lh3.googleusercontent.com \
+     https://platform-lookaside.fbsbx.com; \
      form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
 
 const HSTS: &str = "max-age=31536000; includeSubDomains";

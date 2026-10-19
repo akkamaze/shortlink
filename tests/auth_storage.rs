@@ -7,7 +7,7 @@ use std::fmt::Write;
 use axum_extra::extract::cookie::CookieJar;
 use shortlink::{
     auth::{
-        accounts::{VerifiedIdentity, sign_in},
+        accounts::{self, Attach, ProviderEmail, SignIn, VerifiedIdentity, sign_in},
         picture::PictureUrl,
         provider::Provider,
         session,
@@ -45,7 +45,10 @@ fn identity(subject: &str, email: &str) -> VerifiedIdentity {
     VerifiedIdentity {
         provider: Provider::Google,
         subject: subject.to_owned(),
-        email: Some(email.to_owned()),
+        email: Some(ProviderEmail {
+            address: email.to_owned(),
+            verified: true,
+        }),
         display_name: Some("Ann".to_owned()),
         picture: None,
     }
@@ -58,6 +61,13 @@ fn line_identity(subject: &str) -> VerifiedIdentity {
         email: None,
         display_name: Some("Ann on LINE".to_owned()),
         picture: PictureUrl::parse(&format!("https://profile.line-scdn.net/{subject}")),
+    }
+}
+
+async fn signed(pool: &deadpool_postgres::Pool, identity: &VerifiedIdentity) -> uuid::Uuid {
+    match sign_in(pool, &keys(), identity).await.unwrap() {
+        SignIn::Signed(user_id) => user_id,
+        SignIn::EmailTaken { .. } => panic!("expected a sign-in, the email was taken"),
     }
 }
 
@@ -76,12 +86,16 @@ async fn signing_in_twice_reuses_the_user_and_its_single_space() {
     };
     let subject = uuid::Uuid::new_v4().to_string();
 
-    let first = sign_in(&pool, &keys(), &identity(&subject, "ann@example.com"))
-        .await
-        .unwrap();
-    let second = sign_in(&pool, &keys(), &identity(&subject, "ann@new.example"))
-        .await
-        .unwrap();
+    let first = signed(
+        &pool,
+        &identity(&subject, &format!("{subject}-ann@example.com")),
+    )
+    .await;
+    let second = signed(
+        &pool,
+        &identity(&subject, &format!("{subject}-ann@new.example")),
+    )
+    .await;
 
     let client = pool.get().await.unwrap();
     let spaces: i64 = client
@@ -106,7 +120,10 @@ async fn signing_in_twice_reuses_the_user_and_its_single_space() {
 
     assert_eq!(first, second);
     assert_eq!(spaces, 1);
-    assert_eq!(email.as_deref(), Some("ann@new.example"));
+    assert_eq!(
+        email.as_deref(),
+        Some(format!("{subject}-ann@new.example").as_str())
+    );
 }
 
 #[tokio::test]
@@ -120,7 +137,7 @@ async fn concurrent_first_sign_ins_produce_one_user() {
     let racers = (0..8).map(|_| {
         let pool = pool.clone();
         let identity = identity(&subject, &email);
-        tokio::spawn(async move { sign_in(&pool, &keys(), &identity).await.unwrap() })
+        tokio::spawn(async move { signed(&pool, &identity).await })
     });
     let ids = join_all(racers).await;
 
@@ -144,9 +161,11 @@ async fn session_cookie_finds_the_user_until_deleted() {
         return;
     };
     let subject = uuid::Uuid::new_v4().to_string();
-    let user_id = sign_in(&pool, &keys(), &identity(&subject, "bob@example.com"))
-        .await
-        .unwrap();
+    let user_id = signed(
+        &pool,
+        &identity(&subject, &format!("{subject}-bob@example.com")),
+    )
+    .await;
 
     let token = session::create(&pool, user_id).await.unwrap();
     let jar = CookieJar::new().add(token.into_cookie(false));
@@ -182,19 +201,20 @@ async fn a_database_dump_holds_no_readable_personal_data() {
     let name = format!("Leakcheck {subject}");
     let picture = format!("https://profile.line-scdn.net/{subject}-pic");
 
-    let user_id = sign_in(
+    let user_id = signed(
         &pool,
-        &keys(),
         &VerifiedIdentity {
             provider: Provider::Google,
             subject: subject.clone(),
-            email: Some(email.clone()),
+            email: Some(ProviderEmail {
+                address: email.clone(),
+                verified: true,
+            }),
             display_name: Some(name.clone()),
             picture: PictureUrl::parse(&picture),
         },
     )
-    .await
-    .unwrap();
+    .await;
     session::create(&pool, user_id).await.unwrap();
 
     let client = pool.get().await.unwrap();
@@ -267,9 +287,11 @@ async fn a_profile_that_cannot_be_opened_signs_the_session_out() {
         return;
     };
     let subject = uuid::Uuid::new_v4().to_string();
-    let user_id = sign_in(&pool, &keys(), &identity(&subject, "rotated@example.com"))
-        .await
-        .unwrap();
+    let user_id = signed(
+        &pool,
+        &identity(&subject, &format!("{subject}-rotated@example.com")),
+    )
+    .await;
     let jar = CookieJar::new().add(
         session::create(&pool, user_id)
             .await
@@ -292,9 +314,11 @@ async fn cleanup_removes_expired_sessions_and_keeps_live_ones() {
         return;
     };
     let subject = uuid::Uuid::new_v4().to_string();
-    let user_id = sign_in(&pool, &keys(), &identity(&subject, "cleanup@example.com"))
-        .await
-        .unwrap();
+    let user_id = signed(
+        &pool,
+        &identity(&subject, &format!("{subject}-cleanup@example.com")),
+    )
+    .await;
     let live = CookieJar::new().add(
         session::create(&pool, user_id)
             .await
@@ -339,7 +363,7 @@ async fn a_line_account_keeps_its_name_and_picture_and_has_no_email() {
     };
     let line = line_identity(&fresh_subject());
 
-    let user_id = sign_in(&pool, &keys(), &line).await.unwrap();
+    let user_id = signed(&pool, &line).await;
     let jar = session_jar(session::create(&pool, user_id).await.unwrap());
     let user = session::current_user(&pool, &keys(), &jar)
         .await
@@ -357,16 +381,8 @@ async fn google_and_line_sign_ins_are_separate_accounts() {
         return;
     };
 
-    let via_google = sign_in(
-        &pool,
-        &keys(),
-        &identity(&fresh_subject(), "ann@example.com"),
-    )
-    .await
-    .unwrap();
-    let via_line = sign_in(&pool, &keys(), &line_identity(&fresh_subject()))
-        .await
-        .unwrap();
+    let via_google = signed(&pool, &identity(&fresh_subject(), &fresh_email())).await;
+    let via_line = signed(&pool, &line_identity(&fresh_subject())).await;
 
     assert_ne!(via_google, via_line);
 }
@@ -377,16 +393,14 @@ async fn signing_in_again_replaces_the_name_and_picture() {
         return;
     };
     let subject = fresh_subject();
-    let user_id = sign_in(&pool, &keys(), &line_identity(&subject))
-        .await
-        .unwrap();
+    let user_id = signed(&pool, &line_identity(&subject)).await;
 
     let renamed = VerifiedIdentity {
         display_name: Some("Ann Lee".to_owned()),
         picture: None,
         ..line_identity(&subject)
     };
-    sign_in(&pool, &keys(), &renamed).await.unwrap();
+    signed(&pool, &renamed).await;
     let jar = session_jar(session::create(&pool, user_id).await.unwrap());
     let user = session::current_user(&pool, &keys(), &jar)
         .await
@@ -395,4 +409,119 @@ async fn signing_in_again_replaces_the_name_and_picture() {
 
     assert_eq!(user.display_name.as_deref(), Some("Ann Lee"));
     assert_eq!(user.picture, None, "a picture removed at LINE is gone here");
+}
+
+fn claimed_email(provider: Provider, address: &str, verified: bool) -> VerifiedIdentity {
+    VerifiedIdentity {
+        provider,
+        subject: fresh_subject(),
+        email: Some(ProviderEmail {
+            address: address.to_owned(),
+            verified,
+        }),
+        display_name: None,
+        picture: None,
+    }
+}
+
+fn fresh_email() -> String {
+    format!("{}@example.com", fresh_subject())
+}
+
+#[tokio::test]
+async fn a_new_sign_in_with_a_taken_email_waits_until_the_owner_adds_it() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let email = fresh_email();
+    let owner = signed(&pool, &identity(&fresh_subject(), &email)).await;
+    let newcomer = claimed_email(Provider::Line, &email.to_uppercase(), false);
+
+    let first_try = sign_in(&pool, &keys(), &newcomer).await.unwrap();
+    let added = accounts::attach(&pool, &keys(), owner, &newcomer)
+        .await
+        .unwrap();
+    let next_time = sign_in(&pool, &keys(), &newcomer).await.unwrap();
+
+    assert_eq!(first_try, SignIn::EmailTaken { holder: owner });
+    assert_eq!(added, Attach::Attached);
+    assert_eq!(next_time, SignIn::Signed(owner));
+    assert_eq!(
+        accounts::sign_in_providers(&pool, owner).await.unwrap(),
+        [Provider::Google, Provider::Line]
+    );
+}
+
+#[tokio::test]
+async fn a_sign_in_that_opens_another_account_cannot_be_added() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let mine = signed(&pool, &identity(&fresh_subject(), &fresh_email())).await;
+    let theirs = line_identity(&fresh_subject());
+    let their_account = signed(&pool, &theirs).await;
+
+    let added = accounts::attach(&pool, &keys(), mine, &theirs)
+        .await
+        .unwrap();
+
+    assert_eq!(added, Attach::OwnedElsewhere);
+    assert_eq!(signed(&pool, &theirs).await, their_account);
+}
+
+#[tokio::test]
+async fn a_verified_email_takes_the_address_back_from_an_unverified_claim() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let email = fresh_email();
+    let squatter = signed(&pool, &claimed_email(Provider::Line, &email, false)).await;
+    let real_owner = identity(&fresh_subject(), &email);
+
+    let first_try = sign_in(&pool, &keys(), &real_owner).await.unwrap();
+    let own_account = accounts::create_separate(&pool, &keys(), &real_owner)
+        .await
+        .unwrap();
+    let later_claim = sign_in(
+        &pool,
+        &keys(),
+        &claimed_email(Provider::Line, &email, false),
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(first_try, SignIn::EmailTaken { holder: squatter });
+    assert_ne!(own_account, squatter);
+    assert_eq!(signed(&pool, &real_owner).await, own_account);
+    assert_eq!(
+        later_claim,
+        SignIn::EmailTaken {
+            holder: own_account
+        }
+    );
+}
+
+#[tokio::test]
+async fn an_unverified_separate_account_never_takes_a_verified_email() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let email = fresh_email();
+    let owner = signed(&pool, &identity(&fresh_subject(), &email)).await;
+    let other = claimed_email(Provider::Line, &email, false);
+
+    let separate = accounts::create_separate(&pool, &keys(), &other)
+        .await
+        .unwrap();
+    let next_newcomer = sign_in(
+        &pool,
+        &keys(),
+        &claimed_email(Provider::Line, &email, false),
+    )
+    .await
+    .unwrap();
+
+    assert_ne!(separate, owner);
+    assert_eq!(signed(&pool, &other).await, separate);
+    assert_eq!(next_newcomer, SignIn::EmailTaken { holder: owner });
 }

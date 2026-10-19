@@ -1,8 +1,13 @@
 use openidconnect::url::Url;
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error as _};
 
 /// Hosts providers serve profile pictures from. The CSP `img-src` must list
 /// the same hosts, or the browser blocks the image.
-pub const PICTURE_HOSTS: [&str; 2] = ["profile.line-scdn.net", "lh3.googleusercontent.com"];
+pub const PICTURE_HOSTS: [&str; 3] = [
+    "profile.line-scdn.net",
+    "lh3.googleusercontent.com",
+    "platform-lookaside.fbsbx.com",
+];
 
 /// A profile picture URL the page may show: https, on a provider's picture
 /// host, with no credentials in it.
@@ -26,6 +31,19 @@ impl PictureUrl {
 
     pub fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+}
+
+impl Serialize for PictureUrl {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for PictureUrl {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let raw = String::deserialize(deserializer)?;
+        PictureUrl::parse(&raw).ok_or_else(|| D::Error::custom("untrusted picture URL"))
     }
 }
 

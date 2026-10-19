@@ -4,7 +4,7 @@ use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
 use deadpool_postgres::Pool;
 
-use crate::{auth::oidc::OidcProviders, config::Config, crypto::DataKeys};
+use crate::{auth::sign_in_providers::SignInProviders, config::Config, crypto::DataKeys};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -12,17 +12,17 @@ pub struct AppState {
     pub cookie_key: Key,
     pub secure_cookies: bool,
     pub keys: Arc<DataKeys>,
-    pub oidc: Arc<OidcProviders>,
+    pub providers: Arc<SignInProviders>,
 }
 
 impl AppState {
-    pub fn new(config: &Config, db: Pool, oidc: OidcProviders) -> Self {
+    pub fn new(config: &Config, db: Pool, providers: SignInProviders) -> Self {
         Self {
             db,
             cookie_key: config.cookie_key.clone(),
             secure_cookies: config.https(),
             keys: Arc::new(config.data_keys.clone()),
-            oidc: Arc::new(oidc),
+            providers: Arc::new(providers),
         }
     }
 }
