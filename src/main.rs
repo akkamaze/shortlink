@@ -19,7 +19,7 @@ async fn main() -> anyhow::Result<()> {
         .with_context(|| format!("cannot listen on {}", config.bind_addr))?;
     tracing::info!(addr = %config.bind_addr, "listening");
 
-    axum::serve(listener, app::router())
+    axum::serve(listener, app::router(config.https()))
         .with_graceful_shutdown(shutdown_signal())
         .await
         .context("server stopped with an error")
