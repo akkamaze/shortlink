@@ -18,6 +18,13 @@
     <a class="login__brand" href="/login">shortlink</a>
   </header>
 
+  {% if let Some(message) = problem %}
+    <div class="login__alert" role="alert">
+      <p>{{ message }}</p>
+      <a class="login__alert-close" href="/login" aria-label="Dismiss">{% include "icons/close.html" %}</a>
+    </div>
+  {% endif %}
+
   <main class="login__grid" aria-labelledby="login-title">
     <section class="login__art" aria-hidden="true">
       <p class="login__hero">Less link.<br><span>More possibility.</span></p>
@@ -28,10 +35,6 @@
     <section class="login__panel">
       <h1 id="login-title" class="login__title">Log in to shortlink</h1>
       <p class="login__sub">New here? Logging in creates your account.</p>
-
-      {% if let Some(message) = problem %}
-        <p class="login__error" role="alert">{{ message }}</p>
-      {% endif %}
 
       <div class="login__providers">
         {% for provider in buttons %}

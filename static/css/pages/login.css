@@ -81,15 +81,53 @@
   color: var(--color-text-muted);
 }
 
-.login__error {
-  margin: var(--space-5) 0 0;
-  padding: var(--space-2-5) var(--space-3-5);
+/* Floats at the top like the header, so the card does not move. */
+.login__alert {
+  position: absolute;
+  top: var(--space-6);
+  left: 50%;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: max-content;
+  max-width: calc(100% - var(--space-4) * 2);
+  padding: var(--space-2-5) var(--space-2-5) var(--space-2-5) var(--space-4);
   border: 1px solid rgba(240, 183, 158, 0.3);
   border-radius: var(--radius-control);
   background: #140f12;
   color: var(--color-danger);
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
+  transform: translateX(-50%);
+}
+
+.login__alert p {
+  flex: 1;
+  margin: 0;
+}
+
+/* A link back to the bare page, so it needs no script and also drops the
+   problem from the URL. */
+.login__alert-close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--leading-sm);
+  height: var(--leading-sm);
+  border-radius: var(--radius-pill);
+  color: inherit;
+  opacity: 0.7;
+}
+
+.login__alert-close:hover,
+.login__alert-close:focus-visible {
+  opacity: 1;
+}
+
+.login__alert-close svg {
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .login__providers {
@@ -115,6 +153,14 @@
   .login__top {
     position: static;
     padding: var(--space-3-5) var(--space-4);
+  }
+
+  .login__alert {
+    position: static;
+    width: auto;
+    max-width: none;
+    margin: 0 var(--space-4);
+    transform: none;
   }
 
   .login__grid {
