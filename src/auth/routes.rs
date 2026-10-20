@@ -19,6 +19,7 @@ use crate::{
         pending::PendingSecondFactor,
         routes::now_unix,
         store::{self, Status},
+        trusted,
     },
 };
 
@@ -56,7 +57,7 @@ pub async fn callback(
         .and_then(|cookie| PendingLogin::decode(cookie.value()));
     let private = private.remove(PendingLogin::removal_cookie());
 
-    match complete_sign_in(&state, &slug, params, pending).await {
+    match complete_sign_in(&state, &slug, params, pending, &jar).await {
         Ok(SignedIn::Done(token)) => {
             let jar = jar.add(token.into_cookie(state.secure_cookies));
             (private, jar, Redirect::to("/app")).into_response()
@@ -69,7 +70,8 @@ pub async fn callback(
     }
 }
 
-/// An account with two-factor on gets its session only after the code.
+/// An account with two-factor on gets its session only after the code,
+/// unless this browser was trusted.
 enum SignedIn {
     Done(session::SessionToken),
     NeedsCode(PendingSecondFactor),
@@ -80,6 +82,7 @@ async fn complete_sign_in(
     slug: &str,
     params: CallbackParams,
     pending: Option<PendingLogin>,
+    jar: &CookieJar,
 ) -> Result<SignedIn, AuthError> {
     if let Some(reason) = params.error {
         return Err(AuthError::Cancelled(
@@ -96,7 +99,9 @@ async fn complete_sign_in(
     let identity = state.providers.finish(pending, code).await?;
     let user_id = accounts::sign_in(&state.db, &state.keys, &identity).await?;
 
-    if store::status(&state.db, user_id).await? == Status::On {
+    let asks_for_code = store::status(&state.db, user_id).await? == Status::On
+        && !trusted::is_trusted(&state.db, jar, user_id).await?;
+    if asks_for_code {
         return Ok(SignedIn::NeedsCode(PendingSecondFactor::new(
             user_id,
             now_unix(),

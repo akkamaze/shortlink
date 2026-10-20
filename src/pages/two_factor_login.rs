@@ -41,6 +41,8 @@ mod tests {
 
         assert!(html.contains(r#"action="/login/2fa""#));
         assert!(html.contains(r#"autocomplete="one-time-code""#));
+        assert!(html.contains(r#"name="trust""#));
+        assert!(html.contains("Trust this device"));
         assert!(!html.contains(r#"role="alert""#));
     }
 

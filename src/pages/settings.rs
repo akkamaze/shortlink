@@ -26,35 +26,43 @@ pub struct SettingsPage {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Notice {
     TurnedOff,
+    DevicesForgotten,
     WrongCode,
     Locked,
 }
 
 impl Notice {
+    const ALL: [Notice; 4] = [
+        Notice::TurnedOff,
+        Notice::DevicesForgotten,
+        Notice::WrongCode,
+        Notice::Locked,
+    ];
+
     pub fn code(self) -> &'static str {
         match self {
             Notice::TurnedOff => "two-factor-off",
+            Notice::DevicesForgotten => "devices-forgotten",
             Notice::WrongCode => "wrong-code",
             Notice::Locked => "locked",
         }
     }
 
     fn from_code(code: &str) -> Option<Self> {
-        [Notice::TurnedOff, Notice::WrongCode, Notice::Locked]
-            .into_iter()
-            .find(|notice| notice.code() == code)
+        Self::ALL.into_iter().find(|notice| notice.code() == code)
     }
 
     pub fn message(self) -> &'static str {
         match self {
             Notice::TurnedOff => "Two-factor sign-in is off.",
+            Notice::DevicesForgotten => "Every browser will ask for a code at its next sign-in.",
             Notice::WrongCode => "That code did not work. Try the newest one from your app.",
             Notice::Locked => "Too many wrong codes. Try again in 15 minutes.",
         }
     }
 
     pub fn is_problem(self) -> bool {
-        !matches!(self, Notice::TurnedOff)
+        matches!(self, Notice::WrongCode | Notice::Locked)
     }
 }
 
@@ -113,11 +121,12 @@ mod tests {
         let on = page(Status::On, None);
         assert!(on.contains(r#"action="/settings/2fa/off""#));
         assert!(on.contains(r#"name="code""#), "turning off asks for a code");
+        assert!(on.contains(r#"action="/settings/2fa/forget-devices""#));
     }
 
     #[test]
     fn notices_round_trip_and_problems_are_alerts() {
-        for notice in [Notice::TurnedOff, Notice::WrongCode, Notice::Locked] {
+        for notice in Notice::ALL {
             assert_eq!(Notice::from_code(notice.code()), Some(notice));
         }
         assert_eq!(Notice::from_code("<b>"), None);

@@ -36,6 +36,10 @@ pub fn router(state: AppState, public_base_url: &Url) -> anyhow::Result<Router> 
         .route("/settings/2fa/confirm", post(two_factor::routes::confirm))
         .route("/settings/2fa/off", post(two_factor::routes::turn_off))
         .route("/settings/2fa/cancel", post(two_factor::routes::cancel))
+        .route(
+            "/settings/2fa/forget-devices",
+            post(two_factor::routes::forget_devices),
+        )
         .merge(links::routes::router())
         .nest_service("/static", ServeDir::new("static"))
         .layer(csrf)

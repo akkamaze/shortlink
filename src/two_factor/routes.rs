@@ -13,6 +13,7 @@ use axum_extra::extract::{CookieJar, PrivateCookieJar};
 use super::{
     pending::PendingSecondFactor,
     store::{self, Check, Confirm},
+    trusted,
 };
 use crate::{
     auth::{error::AuthError, session, signed_in::SignedIn},
@@ -34,12 +35,19 @@ pub struct CodeForm {
 
 impl CodeForm {
     fn typed(&self) -> &str {
-        if self.code.len() > MAX_CODE_LEN {
-            ""
-        } else {
-            &self.code
-        }
+        bounded(&self.code)
     }
+}
+
+/// The sign-in code form, where the person may also trust this browser.
+#[derive(Deserialize)]
+pub struct LoginCodeForm {
+    code: String,
+    trust: Option<String>,
+}
+
+fn bounded(code: &str) -> &str {
+    if code.len() > MAX_CODE_LEN { "" } else { code }
 }
 
 pub fn now_unix() -> u64 {
@@ -118,7 +126,7 @@ pub async fn check_at_login(
     State(state): State<AppState>,
     private: PrivateCookieJar,
     jar: CookieJar,
-    Form(form): Form<CodeForm>,
+    Form(form): Form<LoginCodeForm>,
 ) -> Result<Response, AuthError> {
     let Some(pending) = waiting(&private) else {
         return Ok(Redirect::to("/login?problem=expired").into_response());
@@ -128,7 +136,7 @@ pub async fn check_at_login(
         &state.db,
         &state.keys,
         pending.user_id,
-        form.typed(),
+        bounded(&form.code),
         now_unix(),
     )
     .await?
@@ -136,7 +144,11 @@ pub async fn check_at_login(
         Check::Passed => {
             let token = session::create(&state.db, pending.user_id).await?;
             let private = private.remove(PendingSecondFactor::removal_cookie());
-            let jar = jar.add(token.into_cookie(state.secure_cookies));
+            let mut jar = jar.add(token.into_cookie(state.secure_cookies));
+            if form.trust.is_some() {
+                let trust = trusted::trust(&state.db, pending.user_id).await?;
+                jar = jar.add(trust.into_cookie(state.secure_cookies));
+            }
             return Ok((private, jar, Redirect::to("/app")).into_response());
         }
         Check::WrongCode => Notice::WrongCode,
@@ -147,4 +159,22 @@ pub async fn check_at_login(
         problem: Some(problem.message()),
     };
     Ok((StatusCode::BAD_REQUEST, page).into_response())
+}
+
+/// Every browser of this account asks for a code at its next sign-in,
+/// this one included.
+pub async fn forget_devices(
+    State(state): State<AppState>,
+    SignedIn(user): SignedIn,
+    jar: CookieJar,
+) -> Result<(CookieJar, Redirect), AuthError> {
+    trusted::forget_all(&state.db, user.id).await?;
+
+    Ok((
+        jar.remove(trusted::removal_cookie()),
+        Redirect::to(&format!(
+            "/settings?notice={}",
+            Notice::DevicesForgotten.code()
+        )),
+    ))
 }

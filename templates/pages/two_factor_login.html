@@ -31,6 +31,10 @@
         <label class="second-factor__label" for="login-code">Code</label>
         <input class="second-factor__input" id="login-code" name="code" autocapitalize="characters"
                autocomplete="one-time-code" maxlength="32" required autofocus>
+        <label class="second-factor__trust">
+          <input type="checkbox" name="trust" value="yes">
+          Trust this device
+        </label>
         <button class="btn btn--ghost second-factor__submit" type="submit">Continue</button>
       </form>
 

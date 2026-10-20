@@ -66,7 +66,7 @@
 
         {% when Status::On %}
           <p class="settings__text">
-            <span class="settings__on">On.</span> You are asked for a code each time you log in.
+            <span class="settings__on">On.</span> You are asked for a code when you log in, except on devices you trust.
           </p>
           <form class="settings__off" method="post" action="/settings/2fa/off">
             <label class="settings__label" for="off-code">To turn it off, enter a code from your app or a recovery code</label>
@@ -74,6 +74,13 @@
               <input class="settings__input" id="off-code" name="code" autocapitalize="characters"
                      autocomplete="one-time-code" maxlength="32" required>
               <button class="btn btn--ghost" type="submit">Turn off</button>
+            </div>
+          </form>
+
+          <form class="settings__forget" method="post" action="/settings/2fa/forget-devices">
+            <p class="settings__text">Lost a device you trusted? Make every browser ask for a code again.</p>
+            <div class="settings__actions">
+              <button class="btn btn--ghost" type="submit">Forget trusted devices</button>
             </div>
           </form>
       {% endmatch %}
