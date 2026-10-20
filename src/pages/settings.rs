@@ -122,6 +122,7 @@ mod tests {
         assert!(on.contains(r#"action="/settings/2fa/off""#));
         assert!(on.contains(r#"name="code""#), "turning off asks for a code");
         assert!(on.contains(r#"action="/settings/2fa/forget-devices""#));
+        assert!(on.contains(r#"action="/settings/2fa/recovery-codes""#));
     }
 
     #[test]

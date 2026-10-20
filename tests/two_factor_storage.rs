@@ -375,3 +375,26 @@ async fn an_expired_trust_counts_for_nothing_and_is_cleaned_up() {
     assert!(!expired);
     assert_eq!(left, 0);
 }
+
+#[tokio::test]
+async fn a_new_set_of_recovery_codes_retires_the_old_one() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let user = new_user(&pool).await;
+    let (old, _) = turned_on(&pool, user).await;
+
+    let new = store::new_recovery_codes(&pool, &keys(), user)
+        .await
+        .unwrap();
+    let old_now = store::verify(&pool, &keys(), user, &old[0], NOW)
+        .await
+        .unwrap();
+    let new_now = store::verify(&pool, &keys(), user, &new[0], NOW)
+        .await
+        .unwrap();
+
+    assert_eq!(new.len(), 10);
+    assert_eq!(old_now, Check::WrongCode);
+    assert_eq!(new_now, Check::Passed(UsedCode::Recovery));
+}

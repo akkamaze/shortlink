@@ -40,7 +40,8 @@ two accounts.
 
 To try two-factor sign-in, open Settings, press Set up and scan the QR code with an
 authenticator app such as Google Authenticator. The next sign-in asks for its 6-digit code,
-or a recovery code; "Trust this device" skips the code on that browser for 30 days.
+or a recovery code; "Trust this device" skips the code on that browser for 30 days. Settings
+can also replace the recovery codes with a new set, which retires the old one.
 
 ## Test
 

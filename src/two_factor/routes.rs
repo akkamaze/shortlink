@@ -178,3 +178,23 @@ pub async fn forget_devices(
         )),
     ))
 }
+
+/// A new set of recovery codes, shown once like the first set. Asking for a
+/// current code keeps a stolen session from replacing them.
+pub async fn new_recovery_codes(
+    State(state): State<AppState>,
+    SignedIn(user): SignedIn,
+    Form(form): Form<CodeForm>,
+) -> Result<Response, AuthError> {
+    let notice =
+        match store::verify(&state.db, &state.keys, user.id, form.typed(), now_unix()).await? {
+            Check::Passed(_) => {
+                let codes = store::new_recovery_codes(&state.db, &state.keys, user.id).await?;
+                return Ok(RecoveryCodesPage { codes }.into_response());
+            }
+            Check::WrongCode => Notice::WrongCode,
+            Check::Locked => Notice::Locked,
+        };
+
+    Ok(Redirect::to(&format!("/settings?notice={}", notice.code())).into_response())
+}

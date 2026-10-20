@@ -28,6 +28,28 @@ pub struct RecoveryCodesPage {
     pub codes: Vec<String>,
 }
 
+impl RecoveryCodesPage {
+    /// A `data:` link the browser saves as a text file, so the codes never
+    /// travel back to the server to be downloaded.
+    pub fn download_href(&self) -> String {
+        let text = format!(
+            "shortlink recovery codes\nEach code lets you log in once.\n\n{}\n",
+            self.codes.join("\n")
+        );
+        format!("data:text/plain;charset=utf-8,{}", percent_encode(&text))
+    }
+}
+
+/// `"A-1\n"` gives `"A-1%0A"`: letters, digits and `-` stay, the rest is escaped.
+fn percent_encode(text: &str) -> String {
+    text.bytes()
+        .map(|byte| match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' => char::from(byte).to_string(),
+            _ => format!("%{byte:02X}"),
+        })
+        .collect()
+}
+
 impl SetupPage {
     pub fn new(secret_base32: &str, problem: Option<&'static str>) -> anyhow::Result<Self> {
         Ok(Self {
@@ -104,5 +126,8 @@ mod tests {
 
         assert!(html.contains("AAAAA-BBBBB") && html.contains("CCCCC-DDDDD"));
         assert!(html.contains(r#"href="/settings""#));
+        assert!(html.contains(r#"download="shortlink-recovery-codes.txt""#));
+        assert!(html.contains("data:text/plain;charset=utf-8,shortlink%20recovery%20codes"));
+        assert!(html.contains("AAAAA-BBBBB%0ACCCCC-DDDDD%0A"));
     }
 }

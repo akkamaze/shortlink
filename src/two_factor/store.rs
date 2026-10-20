@@ -212,6 +212,27 @@ pub async fn verify(
     Ok(outcome)
 }
 
+/// A new set of ten recovery codes for an account with two-factor on; the
+/// old set stops working. The caller checks a code first.
+pub async fn new_recovery_codes(
+    db: &Pool,
+    keys: &DataKeys,
+    user_id: Uuid,
+) -> anyhow::Result<Vec<String>> {
+    let mut client = db.get().await.context("no database connection")?;
+    let tx = client
+        .transaction()
+        .await
+        .context("cannot start a transaction")?;
+
+    let codes = replace_recovery_codes(&tx, keys, user_id).await?;
+
+    tx.commit()
+        .await
+        .context("cannot commit the new recovery codes")?;
+    Ok(codes)
+}
+
 pub async fn turn_off(db: &Pool, user_id: Uuid) -> anyhow::Result<()> {
     let mut client = db.get().await.context("no database connection")?;
     let tx = client

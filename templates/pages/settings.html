@@ -77,6 +77,16 @@
             </div>
           </form>
 
+          <form class="settings__forget" method="post" action="/settings/2fa/recovery-codes">
+            <p class="settings__text">Lost your recovery codes or used most of them? Get a new set; the old ones stop working.</p>
+            <label class="settings__label" for="codes-code">Enter a code from your app or a recovery code</label>
+            <div class="settings__actions">
+              <input class="settings__input" id="codes-code" name="code" autocapitalize="characters"
+                     autocomplete="one-time-code" maxlength="32" required>
+              <button class="btn btn--ghost" type="submit">Get new codes</button>
+            </div>
+          </form>
+
           <form class="settings__forget" method="post" action="/settings/2fa/forget-devices">
             <p class="settings__text">Lost a device you trusted? Make every browser ask for a code again.</p>
             <div class="settings__actions">
