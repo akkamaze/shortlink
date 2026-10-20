@@ -85,8 +85,8 @@
 
   /* One-time code field: six cells drawn behind one input. --glyph is one
      character wide in whatever monospace font the field uses. */
-  --code-cell: 44px;
-  --code-gap: 8px;
+  --code-cell: 52px;
+  --code-gap: 10px;
   --glyph: 1ch;
 
   --shadow-float: 0 24px 60px -24px rgba(0, 0, 0, 0.6);

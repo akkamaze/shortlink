@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/static/css/components/dot-grid.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/pages/login.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/option-row.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/pages/second-factor.css?v={{ crate::assets::VERSION }}">
 {% endblock %}
 
@@ -19,14 +20,16 @@
   </header>
 
   <main class="second-factor" aria-labelledby="second-factor-title">
-    <section class="login__panel">
+    <section class="second-factor__column">
       {% match with %}
         {% when CodeKind::App %}
-          <h1 id="second-factor-title" class="login__title">Enter your code</h1>
-          <p class="login__sub">Open your authenticator app and type the 6-digit code it shows.</p>
+          <span class="second-factor__badge">{% include "icons/shield_check.html" %}</span>
+          <h1 id="second-factor-title" class="second-factor__title">Verify it’s you</h1>
+          <p class="second-factor__sub">Open your authenticator app and enter the code.</p>
         {% when CodeKind::Recovery %}
-          <h1 id="second-factor-title" class="login__title">Use a recovery code</h1>
-          <p class="login__sub">Type one of the recovery codes you saved. Each works once.</p>
+          <span class="second-factor__badge">{% include "icons/key.html" %}</span>
+          <h1 id="second-factor-title" class="second-factor__title">Recovery code</h1>
+          <p class="second-factor__sub">Enter one of your saved codes. Each one works once.</p>
       {% endmatch %}
 
       {% if let Some(message) = problem %}
@@ -47,30 +50,38 @@
                      pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"
                      spellcheck="false" required autofocus>
             </div>
+
+            <label class="second-factor__trust">
+              <input type="checkbox" name="trust" value="yes">
+              Trust this device
+            </label>
           {% when CodeKind::Recovery %}
-            <label class="second-factor__label" for="login-code">Recovery code</label>
+            <label class="visually-hidden" for="login-code">Recovery code</label>
             <input class="second-factor__input" id="login-code" name="code"
                    autocapitalize="characters" autocomplete="off" spellcheck="false"
                    maxlength="32" placeholder="XXXXX-XXXXX" required autofocus>
         {% endmatch %}
 
-        <label class="second-factor__trust">
-          <input type="checkbox" name="trust" value="yes">
-          Trust this device
-        </label>
-        <button class="btn btn--ghost second-factor__submit" type="submit">Continue</button>
+        <button class="btn btn--solid" type="submit">Sign in</button>
       </form>
 
-      <div class="second-factor__switch">
+      <nav class="second-factor__others" aria-labelledby="other-ways">
+        <h2 id="other-ways" class="second-factor__others-title">Other ways to sign in</h2>
         {% match with %}
           {% when CodeKind::App %}
-            <a class="btn second-factor__other" href="/login/2fa?with=recovery">Use a recovery code instead</a>
+            <a class="option-row" href="/login/2fa?with=recovery">
+              {% include "icons/key.html" %}
+              <span><strong>Use a recovery code</strong><small>One of the codes you saved</small></span>
+              {% include "icons/chevron_right.html" %}
+            </a>
           {% when CodeKind::Recovery %}
-            <a class="btn second-factor__other" href="/login/2fa">Use your authenticator app instead</a>
+            <a class="option-row" href="/login/2fa">
+              {% include "icons/phone.html" %}
+              <span><strong>Use your authenticator app</strong><small>The 6-digit code on your phone</small></span>
+              {% include "icons/chevron_right.html" %}
+            </a>
         {% endmatch %}
-      </div>
-
-      <p class="login__terms"><a href="/login">Start over</a></p>
+      </nav>
     </section>
   </main>
 

@@ -105,7 +105,10 @@ mod tests {
         assert!(html.contains(r#"name="with" value="recovery""#));
         assert!(!html.contains(r#"inputmode="numeric""#));
         assert!(html.contains(r#"href="/login/2fa""#));
-        assert!(html.contains("Trust this device"));
+        assert!(
+            !html.contains(r#"name="trust""#),
+            "a recovery code never trusts the browser"
+        );
     }
 
     #[test]

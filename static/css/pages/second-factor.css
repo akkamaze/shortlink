@@ -3,30 +3,63 @@
   place-items: center;
   flex: 1;
   width: 100%;
-  max-width: calc(var(--space-24) * 5);
-  margin: 0 auto;
   padding: var(--space-16) var(--space-4);
 }
 
-.second-factor .login__panel {
+.second-factor__column {
   width: 100%;
+  max-width: calc(var(--space-24) * 4);
+  text-align: center;
 }
 
-.second-factor__form {
-  display: grid;
-  gap: var(--space-2-5);
-  margin-top: var(--space-7);
-  text-align: left;
+.second-factor__badge {
+  display: inline-grid;
+  place-items: center;
+  width: var(--space-16);
+  height: var(--space-16);
+  border-radius: var(--radius-pill);
+  background: rgba(169, 195, 222, 0.1);
+  color: var(--color-accent);
 }
 
-.second-factor__label {
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
+.second-factor__badge svg {
+  width: var(--space-8);
+  height: var(--space-8);
+}
+
+.second-factor__title {
+  margin: var(--space-6) 0 0;
+  font-size: var(--text-display);
+  line-height: var(--leading-display);
+  font-weight: var(--weight-book);
+  letter-spacing: var(--tracking-display);
+}
+
+.second-factor__sub {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-md);
+  line-height: var(--leading-md);
   color: var(--color-text-muted);
 }
 
+/* The trust row stays reserved on the recovery page, which has no trust
+   box, so the button sits at the same height on both. */
+.second-factor__form {
+  display: grid;
+  grid-template-rows: var(--code-cell) var(--leading-sm) auto;
+  gap: var(--space-5);
+  margin-top: var(--space-8);
+}
+
+.second-factor__form > .btn {
+  grid-row: 3;
+}
+
+/* As wide as the six boxes it stands in for. */
 .second-factor__input {
-  height: var(--target-min);
+  justify-self: center;
+  width: calc(var(--code-cell) * 6 + var(--code-gap) * 5);
+  height: var(--code-cell);
   padding: 0 var(--space-4);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
@@ -34,19 +67,27 @@
   color: var(--color-text);
   font: inherit;
   font-family: var(--font-mono);
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   letter-spacing: var(--tracking-wide);
   text-align: center;
+  text-transform: uppercase;
+  outline: none;
 }
 
-.second-factor__submit {
-  width: 100%;
+.second-factor__input:focus {
+  border-color: var(--color-accent);
 }
 
+.second-factor__input::placeholder {
+  color: var(--color-text-faint);
+}
+
+/* A round tick box in the accent colour. */
 .second-factor__trust {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: center;
+  gap: var(--space-2-5);
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
   color: var(--color-text-muted);
@@ -54,10 +95,48 @@
 }
 
 .second-factor__trust input {
-  width: var(--space-4);
-  height: var(--space-4);
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: var(--space-5);
+  height: var(--space-5);
   margin: 0;
-  accent-color: var(--color-accent);
+  border: 1.5px solid var(--color-text-subtle);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.second-factor__trust input:checked {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.second-factor__trust input:checked::after {
+  content: "";
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+}
+
+.second-factor__trust input:focus-visible {
+  outline: var(--focus-width) solid var(--color-accent);
+  outline-offset: var(--space-0-5);
+}
+
+.second-factor__others {
+  margin-top: var(--space-10);
+  text-align: left;
+}
+
+.second-factor__others-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xs);
+  line-height: var(--leading-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
 }
 
 /* Six boxes behind one transparent input. The digits are spread one box plus
@@ -73,9 +152,8 @@
   justify-self: center;
   width: calc(var(--pitch) * var(--cells) - var(--code-gap));
   height: var(--code-cell);
-  margin-bottom: var(--space-2);
   font-family: var(--font-mono);
-  font-size: var(--text-xl);
+  font-size: var(--text-2xl);
 }
 
 .code-field__cells {
@@ -119,23 +197,19 @@
   outline: none;
 }
 
-.second-factor__switch {
-  margin-top: var(--space-3);
-}
-
-.second-factor__other {
-  width: 100%;
-  background: none;
-  color: var(--color-text-muted);
-}
-
-.second-factor__other:hover {
-  color: var(--color-text);
-}
-
+/* Set on the page, so the recovery input and the form rows shrink with the boxes. */
 @media (max-width: 420px) {
-  .code-field {
+  .second-factor {
     --code-cell: var(--space-10);
     --code-gap: var(--space-1-5);
+  }
+
+  .code-field {
+    font-size: var(--text-xl);
+  }
+
+  /* One subtitle may wrap where the other does not; two lines keep both pages level. */
+  .second-factor__sub {
+    min-height: calc(var(--leading-md) * 2);
   }
 }

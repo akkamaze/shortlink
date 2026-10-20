@@ -1,0 +1,47 @@
+/* A full-width link to another way of doing something: icon, two lines, chevron. */
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3-5) var(--space-4);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  text-decoration: none;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.option-row + .option-row {
+  margin-top: var(--space-2);
+}
+
+.option-row:hover {
+  border-color: var(--border-strong);
+  background: var(--color-surface);
+}
+
+.option-row svg {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  color: var(--color-text-subtle);
+}
+
+.option-row span {
+  flex: 1;
+}
+
+.option-row strong {
+  display: block;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--weight-medium);
+}
+
+.option-row small {
+  display: block;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-subtle);
+}
