@@ -1,0 +1,9 @@
+/* Signed-in page frame: header on top, content in the middle, footer at the bottom. */
+.page-shell {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-image: radial-gradient(at 30% 20%, rgba(27, 43, 61, 0.33), rgba(0, 0, 0, 0) 65%);
+}
