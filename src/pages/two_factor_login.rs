@@ -129,6 +129,7 @@ mod tests {
         let html = page(CodeKind::Recovery, None);
 
         assert!(html.contains(r#"name="with" value="recovery""#));
+        assert!(html.contains(r#"data-code-groups="5,5""#));
         assert!(!html.contains(r#"inputmode="numeric""#));
         assert!(html.contains(r#"href="/login/2fa""#));
         assert!(

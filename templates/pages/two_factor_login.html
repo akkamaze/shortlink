@@ -57,7 +57,7 @@
             </label>
           {% when CodeKind::Recovery %}
             <label class="visually-hidden" for="login-code">Recovery code</label>
-            <input class="second-factor__input" id="login-code" name="code"
+            <input class="second-factor__input" id="login-code" name="code" data-code-groups="5,5"
                    autocapitalize="characters" autocomplete="off" spellcheck="false"
                    maxlength="32" placeholder="XXXXX-XXXXX" required autofocus>
         {% endmatch %}

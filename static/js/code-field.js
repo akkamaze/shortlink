@@ -127,3 +127,43 @@ function enhance(field) {
   input.value = clean(input.value);
   render();
 }
+
+// Formats a typed code into dash-separated groups as the person types:
+// with data-code-groups="5,5", "k7qxm2r" shows as "K7QXM-2R". The caret
+// stays after the same character, so editing the middle does not jump.
+for (const input of document.querySelectorAll("input[data-code-groups]")) {
+  const groups = input.dataset.codeGroups.split(",").map(Number);
+  const total = groups.reduce((sum, size) => sum + size, 0);
+  const plain = (text) => text.toUpperCase().replace(/[^0-9A-Z]/g, "");
+
+  const format = (chars) => {
+    const parts = [];
+    let at = 0;
+    for (const size of groups) {
+      if (at >= chars.length) {
+        break;
+      }
+      parts.push(chars.slice(at, at + size));
+      at += size;
+    }
+    return parts.join("-");
+  };
+
+  input.maxLength = total + groups.length - 1;
+  input.addEventListener("input", () => {
+    const before = plain(input.value.slice(0, input.selectionStart ?? input.value.length)).length;
+    const chars = plain(input.value).slice(0, total);
+    input.value = format(chars);
+
+    // Put the caret back after the same number of characters, past any dash.
+    let caret = 0;
+    let seen = 0;
+    while (caret < input.value.length && seen < before) {
+      if (input.value[caret] !== "-") {
+        seen += 1;
+      }
+      caret += 1;
+    }
+    input.setSelectionRange(caret, caret);
+  });
+}
