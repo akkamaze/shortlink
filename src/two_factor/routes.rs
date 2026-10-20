@@ -157,10 +157,7 @@ pub async fn check_at_login(
         Check::Locked => Notice::Locked.message(),
     };
 
-    let page = SecondFactorPage {
-        with,
-        problem: Some(problem),
-    };
+    let page = SecondFactorPage::new(with, Some(problem));
     Ok((StatusCode::BAD_REQUEST, page).into_response())
 }
 

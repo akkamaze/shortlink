@@ -1,23 +1,51 @@
 use askama::Template;
-use askama_web::WebTemplate;
 use axum::{
     extract::Query,
-    response::{IntoResponse, Redirect, Response},
+    http::StatusCode,
+    response::{Html, IntoResponse, Redirect, Response},
 };
 use axum_extra::extract::PrivateCookieJar;
 use serde::Deserialize;
 
-use crate::two_factor::{
-    pending::{PENDING_COOKIE, PendingSecondFactor},
-    routes::now_unix,
+use crate::{
+    security_headers::ScriptNonce,
+    two_factor::{
+        pending::{PENDING_COOKIE, PendingSecondFactor},
+        routes::now_unix,
+    },
 };
 
 /// The second step of signing in, for accounts with two-factor on.
-#[derive(Template, WebTemplate)]
+#[derive(Template)]
 #[template(path = "pages/two_factor_login.html")]
 pub struct SecondFactorPage {
     pub with: CodeKind,
     pub problem: Option<&'static str>,
+    pub nonce: ScriptNonce,
+}
+
+impl SecondFactorPage {
+    pub fn new(with: CodeKind, problem: Option<&'static str>) -> Self {
+        Self {
+            with,
+            problem,
+            nonce: ScriptNonce::generate(),
+        }
+    }
+}
+
+/// The page with its own policy, which lets the code-box script run.
+impl IntoResponse for SecondFactorPage {
+    fn into_response(self) -> Response {
+        let policy = self.nonce.policy_header();
+        match self.render() {
+            Ok(html) => ([policy], Html(html)).into_response(),
+            Err(error) => {
+                tracing::error!(error = %error, "cannot render the code page");
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
+        }
+    }
 }
 
 /// Which code the page asks for. The app code is the default; a recovery
@@ -62,11 +90,7 @@ pub async fn show(private: PrivateCookieJar, Query(query): Query<SecondFactorQue
         return Redirect::to("/login?problem=expired").into_response();
     }
 
-    SecondFactorPage {
-        with: CodeKind::from_param(query.with.as_deref()),
-        problem: None,
-    }
-    .into_response()
+    SecondFactorPage::new(CodeKind::from_param(query.with.as_deref()), None).into_response()
 }
 
 pub fn waiting(private: &PrivateCookieJar) -> Option<PendingSecondFactor> {
@@ -82,7 +106,7 @@ mod tests {
     use super::{CodeKind, SecondFactorPage};
 
     fn page(with: CodeKind, problem: Option<&'static str>) -> String {
-        SecondFactorPage { with, problem }.render().unwrap()
+        SecondFactorPage::new(with, problem).render().unwrap()
     }
 
     #[test]
@@ -91,6 +115,8 @@ mod tests {
 
         assert!(html.contains(r#"maxlength="6""#));
         assert!(html.contains(r#"class="code-field__cells" aria-hidden="true""#));
+        assert!(html.contains(r#"data-code-field="numeric""#));
+        assert_eq!(html.matches("data-slot").count(), 6);
         assert!(html.contains(r#"inputmode="numeric""#));
         assert!(html.contains(r#"autocomplete="one-time-code""#));
         assert!(html.contains(r#"href="/login/2fa?with=recovery""#));
@@ -117,6 +143,16 @@ mod tests {
         for other in [None, Some("app"), Some("<b>")] {
             assert_eq!(CodeKind::from_param(other), CodeKind::App, "{other:?}");
         }
+    }
+
+    #[test]
+    fn the_box_script_carries_this_pages_nonce() {
+        let page = SecondFactorPage::new(CodeKind::App, None);
+        let nonce = page.nonce.as_str().to_owned();
+        let html = page.render().unwrap();
+
+        assert!(html.contains(&format!(r#"nonce="{nonce}""#)));
+        assert!(html.contains("/static/js/code-field.js"));
     }
 
     #[test]

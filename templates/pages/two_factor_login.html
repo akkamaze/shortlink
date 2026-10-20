@@ -42,9 +42,9 @@
         {% match with %}
           {% when CodeKind::App %}
             <label class="visually-hidden" for="login-code">6-digit code</label>
-            <div class="code-field">
+            <div class="code-field" data-code-field="numeric">
               <span class="code-field__cells" aria-hidden="true">
-                <span></span><span></span><span></span><span></span><span></span><span></span>
+                <span data-slot></span><span data-slot></span><span data-slot></span><span data-slot></span><span data-slot></span><span data-slot></span>
               </span>
               <input class="code-field__input" id="login-code" name="code" inputmode="numeric"
                      pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"
@@ -87,4 +87,6 @@
 
   {% include "components/site_footer.html" %}
 </div>
+
+<script src="/static/js/code-field.js?v={{ crate::assets::VERSION }}" nonce="{{ nonce.as_str() }}" defer></script>
 {% endblock %}

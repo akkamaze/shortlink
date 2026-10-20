@@ -19,6 +19,36 @@ const CONTENT_SECURITY_POLICY: &str = "default-src 'none'; style-src 'self'; \
 
 const HSTS: &str = "max-age=31536000; includeSubDomains";
 
+/// The one exception to "no script": a page that needs a script sends its
+/// own policy, allowing only scripts that carry this response's nonce. A
+/// fresh random nonce per response cannot be guessed by injected markup.
+pub struct ScriptNonce(String);
+
+impl ScriptNonce {
+    pub fn generate() -> Self {
+        use base64::Engine;
+
+        let mut bytes = [0u8; 16];
+        rand::fill(&mut bytes);
+        Self(base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+
+    /// The site policy plus `script-src 'nonce-…'`; `apply` keeps it.
+    pub fn policy_header(&self) -> (HeaderName, HeaderValue) {
+        let policy = format!("{CONTENT_SECURITY_POLICY}; script-src 'nonce-{}'", self.0);
+
+        (
+            header::CONTENT_SECURITY_POLICY,
+            HeaderValue::from_str(&policy)
+                .expect("base64 and the fixed policy are valid header text"),
+        )
+    }
+}
+
 pub fn site_headers(https: bool) -> HeaderMap {
     let mut headers = HeaderMap::new();
     let mut set = |name: HeaderName, value: &'static str| {
@@ -159,5 +189,19 @@ mod tests {
         let headers = response_headers(true, "/callback").await;
 
         assert_eq!(headers[header::CACHE_CONTROL], "no-store");
+    }
+
+    #[test]
+    fn a_script_nonce_is_fresh_and_only_widens_script_src() {
+        let first = super::ScriptNonce::generate();
+        let second = super::ScriptNonce::generate();
+        let (_, value) = first.policy_header();
+        let policy = value.to_str().unwrap();
+
+        assert_ne!(first.as_str(), second.as_str());
+        assert!(policy.starts_with(super::CONTENT_SECURITY_POLICY));
+        assert!(policy.ends_with(&format!("; script-src 'nonce-{}'", first.as_str())));
+        let script_src = policy.split("script-src").nth(1).unwrap();
+        assert!(!script_src.contains("'self'") && !script_src.contains("unsafe-inline"));
     }
 }

@@ -197,6 +197,39 @@
   outline: none;
 }
 
+/* With code-field.js running, the boxes show the digits and the active box
+   lights up. The hidden text keeps its spaced-out layout, so a tap lands the
+   caret on the box under the finger. */
+.code-field.is-live .code-field__input {
+  color: transparent;
+  caret-color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.code-field.is-live .code-field__input::selection {
+  background: transparent;
+}
+
+.code-field.is-live .code-field__cells {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.code-field.is-live .code-field__cells span {
+  display: grid;
+  place-items: center;
+  color: var(--color-text);
+}
+
+.code-field.is-live:focus-within .code-field__cells span {
+  border-color: var(--border-strong);
+}
+
+.code-field.is-live .code-field__cells span.is-active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(169, 195, 222, 0.18);
+}
+
 /* Set on the page, so the recovery input and the form rows shrink with the boxes. */
 @media (max-width: 420px) {
   .second-factor {

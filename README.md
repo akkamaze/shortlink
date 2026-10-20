@@ -83,6 +83,7 @@ never travel with the data.
 | `src/pages/` | Page handlers and their view data |
 | `templates/` | `layouts/`, `pages/`, `components/`, `icons/` |
 | `static/css/` | `tokens.css`, `base.css`, `fonts.css`, `components/`, `pages/` |
+| `static/js/` | Small page scripts, each allowed by a per-response CSP nonce |
 | `static/fonts/` | Self-hosted Inter and JetBrains Mono with their licences |
 | `migrations/` | SQL run by the `migrate` binary as the owner role, never at app start |
 | `postgres/init/` | One-time role and database bootstrap for a new Postgres data directory |
