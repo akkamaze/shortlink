@@ -67,8 +67,8 @@ impl CodeKind {
 
     pub fn wrong_code_message(self) -> &'static str {
         match self {
-            CodeKind::App => "That code did not work. Try the newest one from your app.",
-            CodeKind::Recovery => "That recovery code did not work. Check it, or try another one.",
+            CodeKind::App => "Wrong code. Try the newest one.",
+            CodeKind::Recovery => "That recovery code didn't work.",
         }
     }
 
@@ -158,6 +158,6 @@ mod tests {
 
     #[test]
     fn a_problem_is_an_alert() {
-        assert!(page(CodeKind::App, Some("That code did not work.")).contains(r#"role="alert""#));
+        assert!(page(CodeKind::App, Some("Wrong code.")).contains(r#"role="alert""#));
     }
 }

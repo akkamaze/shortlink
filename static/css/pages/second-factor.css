@@ -46,13 +46,31 @@
    box, so the button sits at the same height on both. */
 .second-factor__form {
   display: grid;
-  grid-template-rows: var(--code-cell) var(--leading-sm) auto;
+  grid-template-rows: auto var(--leading-sm) auto;
   gap: var(--space-5);
   margin-top: var(--space-8);
 }
 
 .second-factor__form > .btn {
   grid-row: 3;
+}
+
+/* The message row is kept even when empty, so a wrong code moves nothing. */
+.second-factor__field {
+  display: grid;
+  grid-template-rows: var(--code-cell) var(--leading-sm);
+  justify-items: center;
+  gap: var(--space-2-5);
+}
+
+/* One line; messages are kept short enough for the narrowest screen. */
+.second-factor__error {
+  grid-row: 2;
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-danger);
+  white-space: nowrap;
 }
 
 /* As wide as the six boxes it stands in for. */

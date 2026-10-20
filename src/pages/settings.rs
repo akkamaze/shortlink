@@ -57,7 +57,7 @@ impl Notice {
             Notice::TurnedOff => "Two-factor sign-in is off.",
             Notice::DevicesForgotten => "Every browser will ask for a code at its next sign-in.",
             Notice::WrongCode => "That code did not work. Try the newest one from your app.",
-            Notice::Locked => "Too many wrong codes. Try again in 15 minutes.",
+            Notice::Locked => "Too many tries. Wait 15 minutes.",
         }
     }
 

@@ -32,35 +32,39 @@
           <p class="second-factor__sub">Enter one of your saved codes. Each one works once.</p>
       {% endmatch %}
 
-      {% if let Some(message) = problem %}
-        <p class="login__error" role="alert">{{ message }}</p>
-      {% endif %}
-
       <form class="second-factor__form" method="post" action="/login/2fa">
         <input type="hidden" name="with" value="{{ with.param() }}">
 
-        {% match with %}
-          {% when CodeKind::App %}
-            <label class="visually-hidden" for="login-code">6-digit code</label>
-            <div class="code-field" data-code-field="numeric">
-              <span class="code-field__cells" aria-hidden="true">
-                <span data-slot></span><span data-slot></span><span data-slot></span><span data-slot></span><span data-slot></span><span data-slot></span>
-              </span>
-              <input class="code-field__input" id="login-code" name="code" inputmode="numeric"
-                     pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"
-                     spellcheck="false" required autofocus>
-            </div>
+        <div class="second-factor__field">
+          {% match with %}
+            {% when CodeKind::App %}
+              <label class="visually-hidden" for="login-code">6-digit code</label>
+              <div class="code-field" data-code-field="numeric">
+                <span class="code-field__cells" aria-hidden="true">
+                  <span data-slot></span><span data-slot></span><span data-slot></span><span data-slot></span><span data-slot></span><span data-slot></span>
+                </span>
+                <input class="code-field__input" id="login-code" name="code" inputmode="numeric"
+                       pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"
+                       spellcheck="false" required autofocus>
+              </div>
+            {% when CodeKind::Recovery %}
+              <label class="visually-hidden" for="login-code">Recovery code</label>
+              <input class="second-factor__input" id="login-code" name="code" data-code-groups="5,5"
+                     autocapitalize="characters" autocomplete="off" spellcheck="false"
+                     maxlength="32" placeholder="XXXXX-XXXXX" required autofocus>
+          {% endmatch %}
 
-            <label class="second-factor__trust">
-              <input type="checkbox" name="trust" value="yes">
-              Trust this device
-            </label>
-          {% when CodeKind::Recovery %}
-            <label class="visually-hidden" for="login-code">Recovery code</label>
-            <input class="second-factor__input" id="login-code" name="code" data-code-groups="5,5"
-                   autocapitalize="characters" autocomplete="off" spellcheck="false"
-                   maxlength="32" placeholder="XXXXX-XXXXX" required autofocus>
-        {% endmatch %}
+          {% if let Some(message) = problem %}
+            <p class="second-factor__error" role="alert">{{ message }}</p>
+          {% endif %}
+        </div>
+
+        {% if with == CodeKind::App %}
+          <label class="second-factor__trust">
+            <input type="checkbox" name="trust" value="yes">
+            Trust this device
+          </label>
+        {% endif %}
 
         <button class="btn btn--solid" type="submit">Sign in</button>
       </form>
