@@ -12,7 +12,7 @@ use axum_extra::extract::{CookieJar, PrivateCookieJar};
 
 use super::{
     pending::PendingSecondFactor,
-    store::{self, Check, Confirm},
+    store::{self, Check, Confirm, UsedCode},
     trusted,
 };
 use crate::{
@@ -98,7 +98,7 @@ pub async fn turn_off(
 ) -> Result<Redirect, AuthError> {
     let notice =
         match store::verify(&state.db, &state.keys, user.id, form.typed(), now_unix()).await? {
-            Check::Passed => {
+            Check::Passed(_) => {
                 store::turn_off(&state.db, user.id).await?;
                 Notice::TurnedOff
             }
@@ -143,11 +143,11 @@ pub async fn check_at_login(
     )
     .await?
     {
-        Check::Passed => {
+        Check::Passed(used) => {
             let token = session::create(&state.db, pending.user_id).await?;
             let private = private.remove(PendingSecondFactor::removal_cookie());
             let mut jar = jar.add(token.into_cookie(state.secure_cookies));
-            if form.trust.is_some() {
+            if form.trust.is_some() && used == UsedCode::App {
                 let trust = trusted::trust(&state.db, pending.user_id).await?;
                 jar = jar.add(trust.into_cookie(state.secure_cookies));
             }

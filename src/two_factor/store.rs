@@ -21,9 +21,17 @@ pub enum Status {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Check {
-    Passed,
+    Passed(UsedCode),
     WrongCode,
     Locked,
+}
+
+/// Which kind of code let the person in. A recovery code is a sign that
+/// something is off, such as a lost phone, so it never trusts a browser.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UsedCode {
+    App,
+    Recovery,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -174,7 +182,7 @@ pub async fn verify(
 
     let fresh_step = totp::matching_step(&factor.secret, typed, totp::step_at(now_unix))
         .filter(|step| factor.last_used_step.is_none_or(|last| *step > last));
-    let passed = match fresh_step {
+    let used = match fresh_step {
         Some(step) => {
             tx.execute(
                 "UPDATE totp_factors SET last_used_step = $2 WHERE user_id = $1",
@@ -182,19 +190,21 @@ pub async fn verify(
             )
             .await
             .context("cannot record the used code")?;
-            true
+            Some(UsedCode::App)
         }
-        None => use_recovery_code(&tx, keys, user_id, typed).await?,
+        None => use_recovery_code(&tx, keys, user_id, typed)
+            .await?
+            .then_some(UsedCode::Recovery),
     };
 
-    let outcome = if passed {
+    let outcome = if let Some(used) = used {
         tx.execute(
             "UPDATE totp_factors SET failed_attempts = 0 WHERE user_id = $1",
             &[&user_id],
         )
         .await
         .context("cannot reset the wrong-code count")?;
-        Check::Passed
+        Check::Passed(used)
     } else {
         record_failure(&tx, user_id).await?
     };

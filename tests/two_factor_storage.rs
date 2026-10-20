@@ -11,7 +11,7 @@ use shortlink::{
     db,
     two_factor::{
         base32,
-        store::{self, Check, Confirm, Status},
+        store::{self, Check, Confirm, Status, UsedCode},
         totp, trusted,
     },
 };
@@ -127,7 +127,7 @@ async fn each_app_code_works_once() {
         .await
         .unwrap();
 
-    assert_eq!(first, Check::Passed);
+    assert_eq!(first, Check::Passed(UsedCode::App));
     assert_eq!(replay, Check::WrongCode);
 }
 
@@ -152,7 +152,11 @@ async fn each_recovery_code_works_once_in_any_case() {
 
     assert_eq!(
         (first, again, another),
-        (Check::Passed, Check::WrongCode, Check::Passed)
+        (
+            Check::Passed(UsedCode::Recovery),
+            Check::WrongCode,
+            Check::Passed(UsedCode::Recovery)
+        )
     );
 }
 
@@ -226,7 +230,7 @@ async fn setup_cannot_replace_a_secret_that_is_on() {
         .unwrap();
 
     assert_eq!(store::status(&pool, user).await.unwrap(), Status::On);
-    assert_eq!(still_works, Check::Passed);
+    assert_eq!(still_works, Check::Passed(UsedCode::App));
 }
 
 #[tokio::test]
