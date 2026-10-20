@@ -71,7 +71,7 @@
           <form class="settings__off" method="post" action="/settings/2fa/off">
             <label class="settings__label" for="off-code">To turn it off, enter a code from your app or a recovery code</label>
             <div class="settings__actions">
-              <input class="settings__input" id="off-code" name="code" inputmode="numeric"
+              <input class="settings__input" id="off-code" name="code" autocapitalize="characters"
                      autocomplete="one-time-code" maxlength="32" required>
               <button class="btn btn--ghost" type="submit">Turn off</button>
             </div>

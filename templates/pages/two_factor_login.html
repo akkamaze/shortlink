@@ -1,0 +1,43 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Enter your code · shortlink{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="/static/css/components/button.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/dot-grid.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/pages/login.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/pages/second-factor.css?v={{ crate::assets::VERSION }}">
+{% endblock %}
+
+{% block body %}
+<div class="login">
+  <div class="dot-grid" aria-hidden="true"></div>
+
+  <header class="login__top">
+    <a class="login__brand" href="/login">shortlink</a>
+  </header>
+
+  <main class="second-factor" aria-labelledby="second-factor-title">
+    <section class="login__panel">
+      <h1 id="second-factor-title" class="login__title">Enter your code</h1>
+      <p class="login__sub">Open your authenticator app and type the 6-digit code, or use a recovery code.</p>
+
+      {% if let Some(message) = problem %}
+        <p class="login__error" role="alert">{{ message }}</p>
+      {% endif %}
+
+      <form class="second-factor__form" method="post" action="/login/2fa">
+        <label class="second-factor__label" for="login-code">Code</label>
+        <input class="second-factor__input" id="login-code" name="code" autocapitalize="characters"
+               autocomplete="one-time-code" maxlength="32" required autofocus>
+        <button class="btn btn--ghost second-factor__submit" type="submit">Continue</button>
+      </form>
+
+      <p class="login__terms"><a href="/login">Start over</a></p>
+    </section>
+  </main>
+
+  {% include "components/site_footer.html" %}
+</div>
+{% endblock %}

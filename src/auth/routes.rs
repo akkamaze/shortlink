@@ -13,7 +13,14 @@ use super::{
     provider::Provider,
     provider_error, session,
 };
-use crate::state::AppState;
+use crate::{
+    state::AppState,
+    two_factor::{
+        pending::PendingSecondFactor,
+        routes::now_unix,
+        store::{self, Status},
+    },
+};
 
 #[derive(Deserialize)]
 pub struct CallbackParams {
@@ -50,12 +57,22 @@ pub async fn callback(
     let private = private.remove(PendingLogin::removal_cookie());
 
     match complete_sign_in(&state, &slug, params, pending).await {
-        Ok(token) => {
+        Ok(SignedIn::Done(token)) => {
             let jar = jar.add(token.into_cookie(state.secure_cookies));
             (private, jar, Redirect::to("/app")).into_response()
         }
+        Ok(SignedIn::NeedsCode(waiting)) => {
+            let private = private.add(waiting.into_cookie(state.secure_cookies));
+            (private, Redirect::to("/login/2fa")).into_response()
+        }
         Err(error) => (private, error).into_response(),
     }
+}
+
+/// An account with two-factor on gets its session only after the code.
+enum SignedIn {
+    Done(session::SessionToken),
+    NeedsCode(PendingSecondFactor),
 }
 
 async fn complete_sign_in(
@@ -63,7 +80,7 @@ async fn complete_sign_in(
     slug: &str,
     params: CallbackParams,
     pending: Option<PendingLogin>,
-) -> Result<session::SessionToken, AuthError> {
+) -> Result<SignedIn, AuthError> {
     if let Some(reason) = params.error {
         return Err(AuthError::Cancelled(
             provider_error::callback_error_code(&reason).to_owned(),
@@ -78,7 +95,14 @@ async fn complete_sign_in(
 
     let identity = state.providers.finish(pending, code).await?;
     let user_id = accounts::sign_in(&state.db, &state.keys, &identity).await?;
-    Ok(session::create(&state.db, user_id).await?)
+
+    if store::status(&state.db, user_id).await? == Status::On {
+        return Ok(SignedIn::NeedsCode(PendingSecondFactor::new(
+            user_id,
+            now_unix(),
+        )));
+    }
+    Ok(SignedIn::Done(session::create(&state.db, user_id).await?))
 }
 
 pub async fn logout(

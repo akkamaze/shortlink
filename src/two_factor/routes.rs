@@ -8,11 +8,17 @@ use axum::{
 };
 use serde::Deserialize;
 
-use super::store::{self, Check, Confirm};
+use axum_extra::extract::{CookieJar, PrivateCookieJar};
+
+use super::{
+    pending::PendingSecondFactor,
+    store::{self, Check, Confirm},
+};
 use crate::{
-    auth::{error::AuthError, signed_in::SignedIn},
+    auth::{error::AuthError, session, signed_in::SignedIn},
     pages::{
         settings::Notice,
+        two_factor_login::{SecondFactorPage, waiting},
         two_factor_setup::{RecoveryCodesPage, SetupPage},
     },
     state::AppState,
@@ -104,4 +110,41 @@ pub async fn cancel(
     }
 
     Ok(Redirect::to("/settings"))
+}
+
+/// Finishes a sign-in that waits for its second factor. The session is made
+/// only after a right app or recovery code.
+pub async fn check_at_login(
+    State(state): State<AppState>,
+    private: PrivateCookieJar,
+    jar: CookieJar,
+    Form(form): Form<CodeForm>,
+) -> Result<Response, AuthError> {
+    let Some(pending) = waiting(&private) else {
+        return Ok(Redirect::to("/login?problem=expired").into_response());
+    };
+
+    let problem = match store::verify(
+        &state.db,
+        &state.keys,
+        pending.user_id,
+        form.typed(),
+        now_unix(),
+    )
+    .await?
+    {
+        Check::Passed => {
+            let token = session::create(&state.db, pending.user_id).await?;
+            let private = private.remove(PendingSecondFactor::removal_cookie());
+            let jar = jar.add(token.into_cookie(state.secure_cookies));
+            return Ok((private, jar, Redirect::to("/app")).into_response());
+        }
+        Check::WrongCode => Notice::WrongCode,
+        Check::Locked => Notice::Locked,
+    };
+
+    let page = SecondFactorPage {
+        problem: Some(problem.message()),
+    };
+    Ok((StatusCode::BAD_REQUEST, page).into_response())
 }

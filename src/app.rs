@@ -26,6 +26,10 @@ pub fn router(state: AppState, public_base_url: &Url) -> anyhow::Result<Router> 
         .route("/auth/{provider}/start", get(auth::routes::start))
         .route("/auth/{provider}/callback", get(auth::routes::callback))
         .route("/logout", post(auth::routes::logout))
+        .route(
+            "/login/2fa",
+            get(pages::two_factor_login::show).post(two_factor::routes::check_at_login),
+        )
         .route("/settings", get(pages::settings::show))
         .route("/settings/2fa", get(pages::two_factor_setup::show))
         .route("/settings/2fa/start", post(two_factor::routes::start))
