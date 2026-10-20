@@ -33,9 +33,8 @@ Open `http://localhost:3100`. "Continue with Google" goes to the mock provider; 
 username to sign in as `<username>@example.com`. "Continue with LINE" does the same without
 an email, like the real LINE.
 
-One email opens one account. When a new sign-in brings an email that another account
-already has, `/link` asks the person to log in the way they did before and then confirm
-before the two are joined; it can also start a separate account instead.
+Each provider is its own account: a Google and a Facebook sign-in with the same email open
+two accounts.
 
 ## Test
 

@@ -81,14 +81,12 @@ async fn client() -> FacebookClient {
 }
 
 #[tokio::test]
-async fn a_good_code_gives_the_profile_with_an_unverified_email() {
+async fn a_good_code_gives_the_profile() {
     let identity = client().await.finish(GOOD_CODE.to_owned()).await.unwrap();
 
     assert_eq!(identity.subject, "10001");
     assert_eq!(identity.display_name.as_deref(), Some("Ann Lee"));
-    let email = identity.email.unwrap();
-    assert_eq!(email.address, "ann@example.com");
-    assert!(!email.verified);
+    assert_eq!(identity.email.as_deref(), Some("ann@example.com"));
     assert!(identity.picture.is_some());
 }
 

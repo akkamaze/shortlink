@@ -7,7 +7,7 @@ use serde::Deserialize;
 use sha2::Sha256;
 
 use super::{
-    accounts::{ProviderEmail, VerifiedIdentity},
+    accounts::VerifiedIdentity,
     error::AuthError,
     oidc::callback_url,
     pending_login::{LoginProof, PendingLogin},
@@ -177,10 +177,7 @@ fn identity_from(me: Me) -> VerifiedIdentity {
     VerifiedIdentity {
         provider: Provider::Facebook,
         subject: me.id,
-        email: me.email.map(|address| ProviderEmail {
-            address,
-            verified: false,
-        }),
+        email: me.email,
         display_name: me.name,
         picture: me
             .picture
@@ -203,7 +200,7 @@ mod tests {
     }
 
     #[test]
-    fn a_facebook_email_is_never_treated_as_verified() {
+    fn the_profile_keeps_the_id_name_email_and_picture() {
         let me: Me = serde_json::from_str(
             r#"{"id":"42","name":"Ann","email":"ann@example.com",
                 "picture":{"data":{"url":"https://platform-lookaside.fbsbx.com/p?asid=42","is_silhouette":false}}}"#,
@@ -213,7 +210,7 @@ mod tests {
         let identity = identity_from(me);
 
         assert_eq!(identity.subject, "42");
-        assert!(!identity.email.unwrap().verified);
+        assert_eq!(identity.email.as_deref(), Some("ann@example.com"));
         assert!(identity.picture.is_some());
     }
 

@@ -1,5 +1,4 @@
 use openidconnect::core::CoreJwsSigningAlgorithm;
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error as _};
 
 /// Sign-in providers the app knows about, in button order. Adding one means
 /// adding a variant here, an icon template and its settings.
@@ -40,8 +39,8 @@ impl Provider {
         !matches!(self, Provider::Facebook)
     }
 
-    /// Only Google's ID token carries a trustworthy `email_verified`. LINE's
-    /// email is never requested; Facebook's is kept as unverified.
+    /// Only Google's ID token carries a trustworthy `email_verified`, and an
+    /// unverified Google email is refused. LINE's email is never requested.
     pub fn vouches_for_email(self) -> bool {
         matches!(self, Provider::Google)
     }
@@ -61,18 +60,5 @@ impl Provider {
             Provider::Facebook => &["email", "public_profile"],
             Provider::Line => &["profile"],
         }
-    }
-}
-
-impl Serialize for Provider {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(self.slug())
-    }
-}
-
-impl<'de> Deserialize<'de> for Provider {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let slug = String::deserialize(deserializer)?;
-        Provider::from_slug(&slug).ok_or_else(|| D::Error::custom("unknown provider"))
     }
 }
