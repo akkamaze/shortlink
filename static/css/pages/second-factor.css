@@ -59,3 +59,83 @@
   margin: 0;
   accent-color: var(--color-accent);
 }
+
+/* Six boxes behind one transparent input. The digits are spread one box plus
+   one gap apart and the first is centred in its box, so each lands in its own.
+   The input runs past the boxes by one gap and the first indent, so the
+   spacing after the sixth digit never scrolls the text out of place. */
+.code-field {
+  --cells: 6;
+  --pitch: calc(var(--code-cell) + var(--code-gap));
+  --indent: calc((var(--code-cell) - var(--glyph)) / 2);
+
+  position: relative;
+  justify-self: center;
+  width: calc(var(--pitch) * var(--cells) - var(--code-gap));
+  height: var(--code-cell);
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+}
+
+.code-field__cells {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: var(--code-gap);
+  pointer-events: none;
+}
+
+.code-field__cells span {
+  flex: 1;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-sunken);
+  transition: border-color 0.15s;
+}
+
+.code-field:focus-within .code-field__cells span {
+  border-color: var(--color-accent);
+}
+
+/* With all six digits typed there is no next box; hide the caret past it. */
+.code-field__input:valid {
+  caret-color: transparent;
+}
+
+.code-field__input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% + var(--code-gap) + var(--indent));
+  height: 100%;
+  padding: 0 0 0 var(--indent);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  caret-color: var(--color-accent);
+  font: inherit;
+  letter-spacing: calc(var(--pitch) - var(--glyph));
+  outline: none;
+}
+
+.second-factor__switch {
+  margin-top: var(--space-3);
+}
+
+.second-factor__other {
+  width: 100%;
+  background: none;
+  color: var(--color-text-muted);
+}
+
+.second-factor__other:hover {
+  color: var(--color-text);
+}
+
+@media (max-width: 420px) {
+  .code-field {
+    --code-cell: var(--space-10);
+    --code-gap: var(--space-1-5);
+  }
+}

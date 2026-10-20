@@ -19,7 +19,7 @@ use crate::{
     auth::{error::AuthError, session, signed_in::SignedIn},
     pages::{
         settings::Notice,
-        two_factor_login::{SecondFactorPage, waiting},
+        two_factor_login::{CodeKind, SecondFactorPage, waiting},
         two_factor_setup::{RecoveryCodesPage, SetupPage},
     },
     state::AppState,
@@ -44,6 +44,7 @@ impl CodeForm {
 pub struct LoginCodeForm {
     code: String,
     trust: Option<String>,
+    with: Option<String>,
 }
 
 fn bounded(code: &str) -> &str {
@@ -132,6 +133,7 @@ pub async fn check_at_login(
         return Ok(Redirect::to("/login?problem=expired").into_response());
     };
 
+    let with = CodeKind::from_param(form.with.as_deref());
     let problem = match store::verify(
         &state.db,
         &state.keys,
@@ -151,12 +153,13 @@ pub async fn check_at_login(
             }
             return Ok((private, jar, Redirect::to("/app")).into_response());
         }
-        Check::WrongCode => Notice::WrongCode,
-        Check::Locked => Notice::Locked,
+        Check::WrongCode => with.wrong_code_message(),
+        Check::Locked => Notice::Locked.message(),
     };
 
     let page = SecondFactorPage {
-        problem: Some(problem.message()),
+        with,
+        problem: Some(problem),
     };
     Ok((StatusCode::BAD_REQUEST, page).into_response())
 }
