@@ -1,6 +1,7 @@
 //! Runs against a real Postgres, like `auth_storage`: set `TEST_DATABASE_URL`
 //! and `TEST_MIGRATION_DATABASE_URL`.
 
+use axum_extra::extract::cookie::CookieJar;
 use shortlink::{
     auth::{
         accounts::{VerifiedIdentity, sign_in},
@@ -11,7 +12,7 @@ use shortlink::{
     two_factor::{
         base32,
         store::{self, Check, Confirm, Status},
-        totp,
+        totp, trusted,
     },
 };
 use uuid::Uuid;
@@ -283,4 +284,90 @@ async fn the_database_holds_no_readable_secret_or_recovery_code() {
     for code in &codes {
         assert!(!dump.contains(&code.replace('-', "")), "{code} is readable");
     }
+}
+
+fn jar_with(token: trusted::TrustToken) -> CookieJar {
+    CookieJar::new().add(token.into_cookie(false))
+}
+
+#[tokio::test]
+async fn a_trusted_browser_counts_only_for_its_user_until_forgotten() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let user = new_user(&pool).await;
+    let someone_else = new_user(&pool).await;
+    let jar = jar_with(trusted::trust(&pool, user).await.unwrap());
+
+    let for_user = trusted::is_trusted(&pool, &jar, user).await.unwrap();
+    let for_someone_else = trusted::is_trusted(&pool, &jar, someone_else)
+        .await
+        .unwrap();
+    let without_cookie = trusted::is_trusted(&pool, &CookieJar::new(), user)
+        .await
+        .unwrap();
+    trusted::forget_all(&pool, user).await.unwrap();
+    let after_forgetting = trusted::is_trusted(&pool, &jar, user).await.unwrap();
+
+    assert!(for_user);
+    assert!(!for_someone_else);
+    assert!(!without_cookie);
+    assert!(!after_forgetting);
+}
+
+#[tokio::test]
+async fn turning_two_factor_off_forgets_trusted_browsers() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let user = new_user(&pool).await;
+    turned_on(&pool, user).await;
+    let jar = jar_with(trusted::trust(&pool, user).await.unwrap());
+
+    store::turn_off(&pool, user).await.unwrap();
+
+    assert!(!trusted::is_trusted(&pool, &jar, user).await.unwrap());
+}
+
+#[tokio::test]
+async fn an_expired_trust_counts_for_nothing_and_is_cleaned_up() {
+    let Some(pool) = test_pool().await else {
+        return;
+    };
+    let user = new_user(&pool).await;
+    let jar = jar_with(trusted::trust(&pool, user).await.unwrap());
+    let fresh = trusted::is_trusted(&pool, &jar, user).await.unwrap();
+
+    // The app role may not change expiry; the owner role stands in for time passing.
+    let owner = db::connect_pool(&std::env::var("TEST_MIGRATION_DATABASE_URL").unwrap()).unwrap();
+    owner
+        .get()
+        .await
+        .unwrap()
+        .execute(
+            "UPDATE trusted_devices
+             SET created_at = now() - interval '31 days', expires_at = now() - interval '1 day'
+             WHERE user_id = $1",
+            &[&user],
+        )
+        .await
+        .unwrap();
+
+    let expired = trusted::is_trusted(&pool, &jar, user).await.unwrap();
+    trusted::delete_expired(&pool).await.unwrap();
+    let left: i64 = pool
+        .get()
+        .await
+        .unwrap()
+        .query_one(
+            "SELECT count(*) FROM trusted_devices WHERE user_id = $1",
+            &[&user],
+        )
+        .await
+        .unwrap()
+        .get(0);
+
+    assert!(fresh);
+    assert!(!expired);
+    assert_eq!(left, 0);
 }

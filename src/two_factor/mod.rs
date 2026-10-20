@@ -4,3 +4,4 @@ pub mod recovery;
 pub mod routes;
 pub mod store;
 pub mod totp;
+pub mod trusted;

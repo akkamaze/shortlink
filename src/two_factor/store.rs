@@ -215,6 +215,12 @@ pub async fn turn_off(db: &Pool, user_id: Uuid) -> anyhow::Result<()> {
     tx.execute("DELETE FROM totp_factors WHERE user_id = $1", &[&user_id])
         .await
         .context("cannot turn two-factor off")?;
+    tx.execute(
+        "DELETE FROM trusted_devices WHERE user_id = $1",
+        &[&user_id],
+    )
+    .await
+    .context("cannot forget the trusted devices")?;
 
     tx.commit()
         .await

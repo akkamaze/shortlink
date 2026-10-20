@@ -156,16 +156,3 @@ pub async fn delete_expired(db: &Pool) -> anyhow::Result<u64> {
         .await
         .context("cannot delete expired sessions")
 }
-
-pub async fn delete_expired_every(db: Pool, period: std::time::Duration) {
-    let mut ticker = tokio::time::interval(period);
-
-    loop {
-        ticker.tick().await;
-
-        match delete_expired(&db).await {
-            Ok(removed) => tracing::info!(removed, "expired sessions deleted"),
-            Err(error) => tracing::warn!(error = %error, "expired session cleanup failed"),
-        }
-    }
-}

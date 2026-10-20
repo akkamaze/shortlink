@@ -5,14 +5,10 @@ use tokio::net::TcpListener;
 use tracing_subscriber::EnvFilter;
 
 use shortlink::{
-    app,
-    auth::{session, sign_in_providers::SignInProviders},
-    config::Config,
-    db,
-    state::AppState,
+    app, auth::sign_in_providers::SignInProviders, cleanup, config::Config, db, state::AppState,
 };
 
-const SESSION_CLEANUP_PERIOD: Duration = Duration::from_hours(1);
+const CLEANUP_PERIOD: Duration = Duration::from_hours(1);
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -25,10 +21,7 @@ async fn main() -> anyhow::Result<()> {
     let config = Config::from_env()?;
 
     let pool = db::connect_pool(&config.database_url)?;
-    tokio::spawn(session::delete_expired_every(
-        pool.clone(),
-        SESSION_CLEANUP_PERIOD,
-    ));
+    tokio::spawn(cleanup::run_every(pool.clone(), CLEANUP_PERIOD));
 
     let providers = SignInProviders::connect(&config).await?;
     let state = AppState::new(&config, pool, providers);
