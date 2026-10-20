@@ -1,0 +1,85 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Settings · shortlink{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="/static/css/components/button.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/page-shell.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/app-header.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/avatar.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/dot-grid.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/pages/settings.css?v={{ crate::assets::VERSION }}">
+{% endblock %}
+
+{% block body %}
+<div class="page-shell">
+  <div class="dot-grid" aria-hidden="true"></div>
+
+  {% include "components/app_header.html" %}
+
+  <main class="settings">
+    <h1 class="settings__title">Settings</h1>
+
+    <section class="settings__card" aria-labelledby="profile-title">
+      <h2 id="profile-title" class="settings__heading">Profile</h2>
+      <div class="settings__profile">
+        {% include "components/avatar.html" %}
+        <div>
+          <p class="settings__name">{{ profile.name }}</p>
+          {% if let Some(email) = profile.email %}
+            <p class="settings__text">{{ email }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="settings__card" aria-labelledby="two-factor-title">
+      <h2 id="two-factor-title" class="settings__heading">Two-factor sign-in</h2>
+
+      {% if let Some(notice) = notice %}
+        {% if notice.is_problem() %}
+          <p class="settings__notice settings__notice--problem" role="alert">{{ notice.message() }}</p>
+        {% else %}
+          <p class="settings__notice" role="status">{{ notice.message() }}</p>
+        {% endif %}
+      {% endif %}
+
+      {% match two_factor %}
+        {% when Status::Off %}
+          <p class="settings__text">
+            Ask for a code from an authenticator app, such as Google Authenticator or
+            Microsoft Authenticator, each time you log in.
+          </p>
+          <form class="settings__actions" method="post" action="/settings/2fa/start">
+            <button class="btn btn--ghost" type="submit">Set up</button>
+          </form>
+
+        {% when Status::SettingUp %}
+          <p class="settings__text">Setup is not finished yet.</p>
+          <div class="settings__actions">
+            <a class="btn btn--ghost" href="/settings/2fa">Continue setup</a>
+            <form method="post" action="/settings/2fa/cancel">
+              <button class="btn settings__quiet" type="submit">Cancel</button>
+            </form>
+          </div>
+
+        {% when Status::On %}
+          <p class="settings__text">
+            <span class="settings__on">On.</span> You are asked for a code each time you log in.
+          </p>
+          <form class="settings__off" method="post" action="/settings/2fa/off">
+            <label class="settings__label" for="off-code">To turn it off, enter a code from your app or a recovery code</label>
+            <div class="settings__actions">
+              <input class="settings__input" id="off-code" name="code" inputmode="numeric"
+                     autocomplete="one-time-code" maxlength="32" required>
+              <button class="btn btn--ghost" type="submit">Turn off</button>
+            </div>
+          </form>
+      {% endmatch %}
+    </section>
+  </main>
+
+  {% include "components/site_footer.html" %}
+</div>
+{% endblock %}

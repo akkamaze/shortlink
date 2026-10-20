@@ -9,7 +9,7 @@ use axum::{
 use tower_http::{csrf::CsrfLayer, services::ServeDir, trace::TraceLayer};
 use url::Url;
 
-use crate::{auth, links, pages, request_log, security_headers, state::AppState};
+use crate::{auth, links, pages, request_log, security_headers, state::AppState, two_factor};
 
 pub fn router(state: AppState, public_base_url: &Url) -> anyhow::Result<Router> {
     let site_headers = Arc::new(security_headers::site_headers(state.secure_cookies));
@@ -26,6 +26,12 @@ pub fn router(state: AppState, public_base_url: &Url) -> anyhow::Result<Router> 
         .route("/auth/{provider}/start", get(auth::routes::start))
         .route("/auth/{provider}/callback", get(auth::routes::callback))
         .route("/logout", post(auth::routes::logout))
+        .route("/settings", get(pages::settings::show))
+        .route("/settings/2fa", get(pages::two_factor_setup::show))
+        .route("/settings/2fa/start", post(two_factor::routes::start))
+        .route("/settings/2fa/confirm", post(two_factor::routes::confirm))
+        .route("/settings/2fa/off", post(two_factor::routes::turn_off))
+        .route("/settings/2fa/cancel", post(two_factor::routes::cancel))
         .merge(links::routes::router())
         .nest_service("/static", ServeDir::new("static"))
         .layer(csrf)

@@ -1,0 +1,42 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Recovery codes · shortlink{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="/static/css/components/button.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/page-shell.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/app-header.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/dot-grid.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/pages/settings.css?v={{ crate::assets::VERSION }}">
+{% endblock %}
+
+{% block body %}
+<div class="page-shell">
+  <div class="dot-grid" aria-hidden="true"></div>
+
+  {% include "components/app_header.html" %}
+
+  <main class="settings">
+    <h1 class="settings__title">Two-factor sign-in is on</h1>
+
+    <section class="settings__card">
+      <h2 class="settings__heading">Save your recovery codes</h2>
+      <p class="settings__text">
+        If you lose your phone, each code lets you log in once. Keep them somewhere safe:
+        they will not be shown again.
+      </p>
+      <ol class="settings__codes">
+        {% for code in codes %}
+          <li>{{ code }}</li>
+        {% endfor %}
+      </ol>
+      <div class="settings__actions">
+        <a class="btn btn--ghost" href="/settings">I saved them</a>
+      </div>
+    </section>
+  </main>
+
+  {% include "components/site_footer.html" %}
+</div>
+{% endblock %}
