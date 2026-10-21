@@ -1,29 +1,3 @@
-/* Same shell as the login page: brand at the left edge, footer at the bottom. */
-.home {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-image: radial-gradient(at 30% 20%, rgba(27, 43, 61, 0.33), rgba(0, 0, 0, 0) 65%);
-}
-
-.home__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-8);
-}
-
-.home__brand {
-  font-size: var(--text-xl);
-  line-height: var(--leading-none);
-  font-weight: var(--weight-medium);
-  letter-spacing: var(--tracking-brand);
-  text-decoration: none;
-}
-
 .home__main {
   flex: 1;
   width: 100%;
@@ -53,10 +27,4 @@
   line-height: var(--leading-md);
   color: var(--color-text-muted);
   overflow-wrap: anywhere;
-}
-
-@media (max-width: 900px) {
-  .home__top {
-    padding: var(--space-3-5) var(--space-4);
-  }
 }

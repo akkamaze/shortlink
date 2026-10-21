@@ -1,24 +1,21 @@
 use anyhow::Context;
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
-use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use deadpool_postgres::Pool;
-use sha2::{Digest, Sha256};
 use time::Duration;
 use uuid::Uuid;
 
 use super::picture::PictureUrl;
-use crate::crypto::{DataKeys, Field, OpenError};
+use crate::crypto::{
+    DataKeys, Field, OpenError,
+    opaque_token::{OpaqueToken, hash_of},
+};
 
 pub const SESSION_COOKIE: &str = "sl_session";
 const SESSION_DAYS: i64 = 30;
-const TOKEN_BYTES: usize = 32;
 
-/// The raw session secret. Only its SHA-256 hash is stored, so a database
-/// leak cannot be replayed as a login.
-pub struct SessionToken {
-    raw: String,
-    hash: Vec<u8>,
-}
+/// The raw session secret. Only its hash is stored, so a database leak
+/// cannot be replayed as a login.
+pub struct SessionToken(OpaqueToken);
 
 pub struct CurrentUser {
     pub id: Uuid,
@@ -34,18 +31,8 @@ struct SealedProfile {
 }
 
 impl SessionToken {
-    fn generate() -> Self {
-        let mut bytes = [0u8; TOKEN_BYTES];
-        rand::fill(&mut bytes);
-
-        Self {
-            raw: URL_SAFE_NO_PAD.encode(bytes),
-            hash: Sha256::digest(bytes).to_vec(),
-        }
-    }
-
     pub fn into_cookie(self, secure: bool) -> Cookie<'static> {
-        Cookie::build((SESSION_COOKIE, self.raw))
+        Cookie::build((SESSION_COOKIE, self.0.raw))
             .path("/")
             .http_only(true)
             .secure(secure)
@@ -55,19 +42,12 @@ impl SessionToken {
     }
 }
 
-/// `None` for anything that is not exactly 32 bytes of URL-safe base64, so
-/// junk cookies never reach the database.
-fn token_hash(raw: &str) -> Option<Vec<u8>> {
-    let bytes = URL_SAFE_NO_PAD.decode(raw).ok()?;
-    (bytes.len() == TOKEN_BYTES).then(|| Sha256::digest(&bytes).to_vec())
-}
-
 pub fn removal_cookie() -> Cookie<'static> {
     Cookie::build(SESSION_COOKIE).path("/").build()
 }
 
 pub async fn create(db: &Pool, user_id: Uuid) -> anyhow::Result<SessionToken> {
-    let token = SessionToken::generate();
+    let token = OpaqueToken::generate();
 
     let client = db.get().await.context("no database connection")?;
     client
@@ -79,7 +59,7 @@ pub async fn create(db: &Pool, user_id: Uuid) -> anyhow::Result<SessionToken> {
         .await
         .context("cannot store the session")?;
 
-    Ok(token)
+    Ok(SessionToken(token))
 }
 
 /// The signed-in person, or `None`. A session also ends here when its
@@ -89,7 +69,7 @@ pub async fn current_user(
     keys: &DataKeys,
     jar: &CookieJar,
 ) -> anyhow::Result<Option<CurrentUser>> {
-    let Some(hash) = jar.get(SESSION_COOKIE).and_then(|c| token_hash(c.value())) else {
+    let Some(hash) = jar.get(SESSION_COOKIE).and_then(|c| hash_of(c.value())) else {
         return Ok(None);
     };
 
@@ -154,7 +134,7 @@ async fn end_session(client: &deadpool_postgres::Object, hash: &[u8]) -> anyhow:
 }
 
 pub async fn delete(db: &Pool, jar: &CookieJar) -> anyhow::Result<()> {
-    let Some(hash) = jar.get(SESSION_COOKIE).and_then(|c| token_hash(c.value())) else {
+    let Some(hash) = jar.get(SESSION_COOKIE).and_then(|c| hash_of(c.value())) else {
         return Ok(());
     };
 
@@ -175,38 +155,4 @@ pub async fn delete_expired(db: &Pool) -> anyhow::Result<u64> {
         .execute("DELETE FROM sessions WHERE expires_at <= now()", &[])
         .await
         .context("cannot delete expired sessions")
-}
-
-pub async fn delete_expired_every(db: Pool, period: std::time::Duration) {
-    let mut ticker = tokio::time::interval(period);
-
-    loop {
-        ticker.tick().await;
-
-        match delete_expired(&db).await {
-            Ok(removed) => tracing::info!(removed, "expired sessions deleted"),
-            Err(error) => tracing::warn!(error = %error, "expired session cleanup failed"),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{SessionToken, token_hash};
-
-    #[test]
-    fn cookie_value_hashes_to_the_stored_hash() {
-        let first = SessionToken::generate();
-        let second = SessionToken::generate();
-
-        assert_ne!(first.raw, second.raw);
-        assert_eq!(token_hash(&first.raw), Some(first.hash));
-    }
-
-    #[test]
-    fn malformed_tokens_are_rejected_before_the_database() {
-        assert_eq!(token_hash(""), None);
-        assert_eq!(token_hash("not base64 !"), None);
-        assert_eq!(token_hash("c2hvcnQ"), None);
-    }
 }

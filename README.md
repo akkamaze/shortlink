@@ -3,7 +3,9 @@
 Short links at `link.synqloud.com`. Rust (Axum, tokio-postgres) with server-rendered Askama
 pages and PostgreSQL.
 
-Google and LINE sign-in work; the other sign-in buttons are drawn but not wired up yet.
+Google, Facebook and LINE sign-in work (Facebook and LINE only when configured); the email
+button is drawn but not wired up yet. Any account can turn on two-factor sign-in with an
+authenticator app from Settings.
 
 ## Run locally
 
@@ -36,6 +38,11 @@ an email, like the real LINE.
 Each provider is its own account: a Google and a Facebook sign-in with the same email open
 two accounts.
 
+To try two-factor sign-in, open Settings, press Set up and scan the QR code with an
+authenticator app such as Google Authenticator. The next sign-in asks for its 6-digit code,
+or a recovery code; "Trust this device" skips the code on that browser for 30 days. Settings
+can also replace the recovery codes with a new set, which retires the old one.
+
 ## Test
 
 ```bash
@@ -59,7 +66,10 @@ The database holds only ciphertext and keyed hashes. That protects users only if
 never travel with the data.
 
 - Keep `DATA_KEY` out of every backup that holds the database, and keep an offline copy of it:
-  without it stored emails and names cannot be read, and returning users get new accounts.
+  without it stored emails, names and authenticator secrets cannot be read, returning users
+  get new accounts, and two-factor codes stop working.
+- With `DATA_KEY` and the database together, an attacker could compute anyone's two-factor
+  codes. Recovery codes and trusted-device cookies are stored only as hashes either way.
 - Give each process only its own secrets. Any secret can be read from a `*_FILE` path.
 - Rotating `DATA_KEY` is not supported yet; a changed key signs everyone out.
 
@@ -67,11 +77,14 @@ never travel with the data.
 
 | Path | What it holds |
 |---|---|
-| `src/auth/` | Providers, OIDC flow, sessions, accounts |
-| `src/crypto/` | Sealing personal fields and keyed lookups |
+| `src/auth/` | Providers, OIDC and Facebook flows, sessions, accounts |
+| `src/two_factor/` | TOTP codes, recovery codes, trusted devices and their routes |
+| `src/links/` | Reserved slugs and their redirects |
+| `src/crypto/` | Sealing personal fields, keyed lookups and hashed cookie tokens |
 | `src/pages/` | Page handlers and their view data |
 | `templates/` | `layouts/`, `pages/`, `components/`, `icons/` |
 | `static/css/` | `tokens.css`, `base.css`, `fonts.css`, `components/`, `pages/` |
+| `static/js/` | Small page scripts, each allowed by a per-response CSP nonce |
 | `static/fonts/` | Self-hosted Inter and JetBrains Mono with their licences |
 | `migrations/` | SQL run by the `migrate` binary as the owner role, never at app start |
 | `postgres/init/` | One-time role and database bootstrap for a new Postgres data directory |

@@ -1,0 +1,58 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Set up two-factor · shortlink{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="/static/css/components/button.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/page-shell.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/app-header.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/dot-grid.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/pages/settings.css?v={{ crate::assets::VERSION }}">
+{% endblock %}
+
+{% block body %}
+<div class="page-shell">
+  <div class="dot-grid" aria-hidden="true"></div>
+
+  {% include "components/app_header.html" %}
+
+  <main class="settings">
+    <h1 class="settings__title">Set up two-factor sign-in</h1>
+
+    <section class="settings__card">
+      <h2 class="settings__heading">1. Scan the QR code</h2>
+      <p class="settings__text">
+        Open Google Authenticator, Microsoft Authenticator or another authenticator app and
+        scan this code.
+      </p>
+      <div class="settings__qr">{{ qr_svg|safe }}</div>
+      <p class="settings__text">Cannot scan it? Enter this key instead:</p>
+      <p class="settings__key">{% for group in key_groups %}<span>{{ group }}</span>{% endfor %}</p>
+    </section>
+
+    <section class="settings__card">
+      <h2 class="settings__heading">2. Enter the code the app shows</h2>
+
+      {% if let Some(message) = problem %}
+        <p class="settings__notice settings__notice--problem" role="alert">{{ message }}</p>
+      {% endif %}
+
+      <form method="post" action="/settings/2fa/confirm">
+        <label class="settings__label" for="setup-code">6-digit code</label>
+        <div class="settings__actions">
+          <input class="settings__input" id="setup-code" name="code" inputmode="numeric"
+                 autocomplete="one-time-code" maxlength="32" required autofocus>
+          <button class="btn btn--ghost" type="submit">Turn on</button>
+        </div>
+      </form>
+
+      <form class="settings__actions" method="post" action="/settings/2fa/cancel">
+        <button class="btn settings__quiet" type="submit">Cancel</button>
+      </form>
+    </section>
+  </main>
+
+  {% include "components/site_footer.html" %}
+</div>
+{% endblock %}

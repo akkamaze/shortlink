@@ -9,6 +9,7 @@
   border-radius: var(--radius-pill);
   font: inherit;
   font-size: var(--text-sm);
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -22,4 +23,18 @@
 .btn--ghost:hover {
   background: rgba(237, 243, 250, 0.08);
   border-color: rgba(237, 243, 250, 0.28);
+}
+
+/* The one main action on a page: solid light on the dark background. */
+.btn--solid {
+  width: 100%;
+  height: var(--control-height);
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-size: var(--text-md);
+  font-weight: var(--weight-strong);
+}
+
+.btn--solid:hover {
+  opacity: 0.9;
 }

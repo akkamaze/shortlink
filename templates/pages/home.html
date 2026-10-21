@@ -4,6 +4,8 @@
 
 {% block styles %}
   <link rel="stylesheet" href="/static/css/components/button.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/page-shell.css?v={{ crate::assets::VERSION }}">
+  <link rel="stylesheet" href="/static/css/components/app-header.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/components/avatar.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/components/dot-grid.css?v={{ crate::assets::VERSION }}">
   <link rel="stylesheet" href="/static/css/components/site-footer.css?v={{ crate::assets::VERSION }}">
@@ -11,16 +13,10 @@
 {% endblock %}
 
 {% block body %}
-<div class="home">
+<div class="page-shell">
   <div class="dot-grid" aria-hidden="true"></div>
 
-  <header class="home__top">
-    <a class="home__brand" href="/app">shortlink</a>
-
-    <form method="post" action="/logout">
-      <button class="btn btn--ghost" type="submit">Log out</button>
-    </form>
-  </header>
+  {% include "components/app_header.html" %}
 
   <main class="home__main">
     {% include "components/avatar.html" %}

@@ -1,0 +1,266 @@
+.second-factor {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  width: 100%;
+  padding: var(--space-16) var(--space-4);
+}
+
+.second-factor__column {
+  width: 100%;
+  max-width: calc(var(--space-24) * 4);
+  text-align: center;
+}
+
+.second-factor__badge {
+  display: inline-grid;
+  place-items: center;
+  width: var(--space-16);
+  height: var(--space-16);
+  border-radius: var(--radius-pill);
+  background: rgba(169, 195, 222, 0.1);
+  color: var(--color-accent);
+}
+
+.second-factor__badge svg {
+  width: var(--space-8);
+  height: var(--space-8);
+}
+
+.second-factor__title {
+  margin: var(--space-6) 0 0;
+  font-size: var(--text-display);
+  line-height: var(--leading-display);
+  font-weight: var(--weight-book);
+  letter-spacing: var(--tracking-display);
+}
+
+.second-factor__sub {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-md);
+  line-height: var(--leading-md);
+  color: var(--color-text-muted);
+}
+
+/* The trust row stays reserved on the recovery page, which has no trust
+   box, so the button sits at the same height on both. */
+.second-factor__form {
+  display: grid;
+  grid-template-rows: auto var(--leading-sm) auto;
+  gap: var(--space-5);
+  margin-top: var(--space-8);
+}
+
+.second-factor__form > .btn {
+  grid-row: 3;
+}
+
+/* The message row is kept even when empty, so a wrong code moves nothing. */
+.second-factor__field {
+  display: grid;
+  grid-template-rows: var(--code-cell) var(--leading-sm);
+  justify-items: center;
+  gap: var(--space-2-5);
+}
+
+/* One line; messages are kept short enough for the narrowest screen. */
+.second-factor__error {
+  grid-row: 2;
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-danger);
+  white-space: nowrap;
+}
+
+/* As wide as the six boxes it stands in for. */
+.second-factor__input {
+  justify-self: center;
+  width: calc(var(--code-cell) * 6 + var(--code-gap) * 5);
+  height: var(--code-cell);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-wide);
+  text-align: center;
+  text-transform: uppercase;
+  outline: none;
+}
+
+.second-factor__input:focus {
+  border-color: var(--color-accent);
+}
+
+.second-factor__input::placeholder {
+  color: var(--color-text-faint);
+}
+
+/* A round tick box in the accent colour. */
+.second-factor__trust {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2-5);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.second-factor__trust input {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  margin: 0;
+  border: 1.5px solid var(--color-text-subtle);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.second-factor__trust input:checked {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.second-factor__trust input:checked::after {
+  content: "";
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+}
+
+.second-factor__trust input:focus-visible {
+  outline: var(--focus-width) solid var(--color-accent);
+  outline-offset: var(--space-0-5);
+}
+
+.second-factor__others {
+  margin-top: var(--space-10);
+  text-align: left;
+}
+
+.second-factor__others-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xs);
+  line-height: var(--leading-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+/* Six boxes behind one transparent input. The digits are spread one box plus
+   one gap apart and the first is centred in its box, so each lands in its own.
+   The input runs past the boxes by one gap and the first indent, so the
+   spacing after the sixth digit never scrolls the text out of place. */
+.code-field {
+  --cells: 6;
+  --pitch: calc(var(--code-cell) + var(--code-gap));
+  --indent: calc((var(--code-cell) - var(--glyph)) / 2);
+
+  position: relative;
+  justify-self: center;
+  width: calc(var(--pitch) * var(--cells) - var(--code-gap));
+  height: var(--code-cell);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+}
+
+.code-field__cells {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: var(--code-gap);
+  pointer-events: none;
+}
+
+.code-field__cells span {
+  flex: 1;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-sunken);
+  transition: border-color 0.15s;
+}
+
+.code-field:focus-within .code-field__cells span {
+  border-color: var(--color-accent);
+}
+
+/* With all six digits typed there is no next box; hide the caret past it. */
+.code-field__input:valid {
+  caret-color: transparent;
+}
+
+.code-field__input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% + var(--code-gap) + var(--indent));
+  height: 100%;
+  padding: 0 0 0 var(--indent);
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  caret-color: var(--color-accent);
+  font: inherit;
+  letter-spacing: calc(var(--pitch) - var(--glyph));
+  outline: none;
+}
+
+/* With code-field.js running, the boxes show the digits and the active box
+   lights up. The hidden text keeps its spaced-out layout, so a tap lands the
+   caret on the box under the finger. */
+.code-field.is-live .code-field__input {
+  color: transparent;
+  caret-color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.code-field.is-live .code-field__input::selection {
+  background: transparent;
+}
+
+.code-field.is-live .code-field__cells {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.code-field.is-live .code-field__cells span {
+  display: grid;
+  place-items: center;
+  color: var(--color-text);
+}
+
+.code-field.is-live:focus-within .code-field__cells span {
+  border-color: var(--border-strong);
+}
+
+.code-field.is-live .code-field__cells span.is-active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(169, 195, 222, 0.18);
+}
+
+/* Set on the page, so the recovery input and the form rows shrink with the boxes. */
+@media (max-width: 420px) {
+  .second-factor {
+    --code-cell: var(--space-10);
+    --code-gap: var(--space-1-5);
+  }
+
+  .code-field {
+    font-size: var(--text-xl);
+  }
+
+  /* One subtitle may wrap where the other does not; two lines keep both pages level. */
+  .second-factor__sub {
+    min-height: calc(var(--leading-md) * 2);
+  }
+}

@@ -9,3 +9,4 @@ pub mod provider_error;
 pub mod routes;
 pub mod session;
 pub mod sign_in_providers;
+pub mod signed_in;
